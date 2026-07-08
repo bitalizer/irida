@@ -44,5 +44,5 @@ jobs:
       - name: clang-format check
         run: |
           sudo apt-get update && sudo apt-get install -y clang-format-18
-          find libs capi frontends -regex '.*\.\(cpp\|hpp\|h\)' \
+          find irida-core irida-api irida-ui -regex '.*\.\(cpp\|hpp\|h\)' \
             | xargs clang-format-18 --dry-run --Werror

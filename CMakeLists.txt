@@ -14,17 +14,25 @@ include(IridaWarnings)
 
 enable_testing()
 
-add_subdirectory(libs/base)
-add_subdirectory(libs/protocol)
-add_subdirectory(libs/host)
-add_subdirectory(core/transport)
-add_subdirectory(core/target)
-add_subdirectory(capi)
-add_subdirectory(frontends/mock)
+# Three shippable projects: irida-core (engine), irida-api (stable C ABI),
+# irida-ui (frontends). Build together for now; the layout is the seam along
+# which they will later split into separately-shipped artifacts.
+
+# --- irida-core: the engine ---
+add_subdirectory(irida-core/libs/base)
+add_subdirectory(irida-core/libs/protocol)
+add_subdirectory(irida-core/libs/host)
+add_subdirectory(irida-core/core/transport)
+add_subdirectory(irida-core/core/target)
+
+# --- irida-api: the stable C ABI ---
+add_subdirectory(irida-api)
+
+# --- irida-ui: frontends (mock backend + Qt GUI) ---
+add_subdirectory(irida-ui/mock)
 if(IRIDA_GUI)
-  add_subdirectory(frontends/gui)
+  add_subdirectory(irida-ui/gui)
 endif()
-# (remaining subdirs added as their tasks land; see plan)
 
 # Enforce the allowed dependency DAG at configure time.
 include(IridaLayerCheck)
