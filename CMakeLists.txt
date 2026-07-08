@@ -15,6 +15,7 @@ include(IridaWarnings)
 enable_testing()
 
 add_subdirectory(libs/base)
+add_subdirectory(libs/protocol)
 add_subdirectory(capi)
 add_subdirectory(frontends/mock)
 if(IRIDA_GUI)
