@@ -3,3 +3,8 @@ add_executable(test_mock test_mock.cpp)
 target_link_libraries(test_mock PRIVATE irida_mock)
 irida_set_warnings(test_mock)
 add_test(NAME mock.backend COMMAND test_mock)
+
+add_executable(test_mock_stepping test_mock_stepping.cpp)
+target_link_libraries(test_mock_stepping PRIVATE irida_mock irida_capi)
+irida_set_warnings(test_mock_stepping)
+add_test(NAME mock.stepping COMMAND test_mock_stepping)
