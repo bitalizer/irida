@@ -9,6 +9,8 @@ class TestIcons : public QObject {
     void known_icon_loads_non_null() {
         QIcon i = icons::load("play");
         QVERIFY(!i.isNull());
+        // guard against "non-null but empty": the icon must yield a real pixmap
+        QVERIFY(!i.pixmap(20, 20).isNull());
     }
     void missing_icon_is_safe() {
         QIcon i = icons::load("does-not-exist");
