@@ -19,9 +19,15 @@ template <typename T> class Result {
     bool has_value() const {
         return has_value_;
     }
-    const T& value() const {
+    const T& value() const& {
         assert(has_value_);
         return value_;
+    }
+    // Rvalue overload: lets callers move a non-copyable T out of a
+    // temporary/moved-from Result, e.g. `T t = std::move(result).value();`.
+    T value() && {
+        assert(has_value_);
+        return std::move(value_);
     }
     const std::string& error() const {
         assert(!has_value_);
