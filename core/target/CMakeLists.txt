@@ -2,7 +2,8 @@
 add_library(irida_target STATIC
   src/register_set.cpp
   src/memory_cache.cpp
-  src/guest_state.cpp)
+  src/guest_state.cpp
+  src/target.cpp)
 target_include_directories(irida_target
   PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}/include
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
