@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BUSL-1.1
-find_package(Qt6 REQUIRED COMPONENTS Test Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Test Widgets Svg)
 set(CMAKE_AUTOMOC ON)
 
 add_executable(test_table_view
@@ -79,3 +79,13 @@ target_include_directories(test_cpu_widget PRIVATE
 target_link_libraries(test_cpu_widget PRIVATE irida_capi irida_mock Qt6::Test Qt6::Widgets)
 irida_set_warnings(test_cpu_widget)
 add_test(NAME gui.cpu_widget COMMAND test_cpu_widget)
+
+add_executable(test_icons
+  test_icons.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../src/theme/icons.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../resources/icons.qrc)
+target_include_directories(test_icons PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../src)
+target_link_libraries(test_icons PRIVATE Qt6::Test Qt6::Widgets Qt6::Svg)
+set_target_properties(test_icons PROPERTIES AUTORCC ON)
+irida_set_warnings(test_icons)
+add_test(NAME gui.icons COMMAND test_icons)
