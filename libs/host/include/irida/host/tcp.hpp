@@ -11,7 +11,7 @@ namespace irida::host {
 
 // Minimal blocking TCP client. Platform (Winsock) details live only in tcp.cpp.
 class TcpClient {
-public:
+  public:
     TcpClient() = default;
     ~TcpClient();
     TcpClient(TcpClient&&) noexcept;
@@ -24,7 +24,7 @@ public:
     irida::base::Result<size_t> recv(std::span<std::byte> buf, int timeout_ms);
     void close();
 
-private:
+  private:
     // Stored as intptr_t to avoid leaking Winsock types into the header.
     intptr_t sock_ = -1;
 };

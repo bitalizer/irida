@@ -30,7 +30,9 @@ static int parse_hex_byte(std::string_view s) {
     return (hi << 4) | lo;
 }
 
-std::string req_read_registers() { return "g"; }
+std::string req_read_registers() {
+    return "g";
+}
 std::string req_read_memory(uint64_t addr, uint64_t len) {
     return "m" + hexnum(addr) + "," + hexnum(len);
 }
@@ -43,12 +45,22 @@ std::string req_set_breakpoint(int type, uint64_t addr, int kind) {
 std::string req_remove_breakpoint(int type, uint64_t addr, int kind) {
     return "z" + std::to_string(type) + "," + hexnum(addr) + "," + std::to_string(kind);
 }
-std::string req_continue() { return "c"; }
-std::string req_step() { return "s"; }
-std::string req_halt_reason() { return "?"; }
-std::string req_qsupported() { return "qSupported"; }
+std::string req_continue() {
+    return "c";
+}
+std::string req_step() {
+    return "s";
+}
+std::string req_halt_reason() {
+    return "?";
+}
+std::string req_qsupported() {
+    return "qSupported";
+}
 
-bool reply_is_ok(std::string_view payload) { return payload == "OK"; }
+bool reply_is_ok(std::string_view payload) {
+    return payload == "OK";
+}
 
 std::optional<int> reply_error_code(std::string_view payload) {
     if (payload.size() >= 3 && payload[0] == 'E') {
@@ -83,9 +95,8 @@ StopReply parse_stop_reply(std::string_view p) {
         size_t i = 0;
         while (i < rest.size()) {
             size_t semi = rest.find(';', i);
-            std::string_view field = rest.substr(i, semi == std::string_view::npos
-                                                        ? std::string_view::npos
-                                                        : semi - i);
+            std::string_view field =
+                rest.substr(i, semi == std::string_view::npos ? std::string_view::npos : semi - i);
             size_t colon = field.find(':');
             if (colon != std::string_view::npos) {
                 r.info.emplace_back(std::string(field.substr(0, colon)),

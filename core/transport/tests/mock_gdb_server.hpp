@@ -8,12 +8,14 @@
 // port, acks every packet with '+', and replies to specific requests with
 // scripted, framed responses. One client, then exits.
 class MockGdbServer {
-public:
+  public:
     MockGdbServer();
     ~MockGdbServer();
-    uint16_t port() const { return port_; }
+    uint16_t port() const {
+        return port_;
+    }
 
-private:
+  private:
     void run();
     uint16_t port_ = 0;
     intptr_t listen_sock_ = -1;

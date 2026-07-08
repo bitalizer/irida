@@ -15,8 +15,8 @@ int main() {
     assert(v.size() == 4);
     assert(v[1] == std::byte{0xde} && v[3] == std::byte{0xff});
 
-    assert(!hex_decode("abc").has_value());   // odd length
-    assert(!hex_decode("zz").has_value());    // invalid digit
+    assert(!hex_decode("abc").has_value()); // odd length
+    assert(!hex_decode("zz").has_value());  // invalid digit
 
     // round-trip empty
     assert(hex_encode({}) == "");

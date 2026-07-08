@@ -22,7 +22,7 @@ int main() {
     FrameDecoder d2;
     d2.feed("$he");
     assert(!d2.next_payload().has_value());
-    d2.feed("llo#");        // checksum of "hello" = 0x68+0x65+0x6c+0x6c+0x6f=0x214 ->0x14
+    d2.feed("llo#"); // checksum of "hello" = 0x68+0x65+0x6c+0x6c+0x6f=0x214 ->0x14
     d2.feed("14");
     auto q = d2.next_payload();
     assert(q.has_value() && *q == "hello");
@@ -30,8 +30,10 @@ int main() {
     // Two packets in one feed.
     FrameDecoder d3;
     d3.feed("$a#61$b#62");
-    auto a = d3.next_payload(); auto b = d3.next_payload();
-    assert(a && *a == "a"); assert(b && *b == "b");
+    auto a = d3.next_payload();
+    auto b = d3.next_payload();
+    assert(a && *a == "a");
+    assert(b && *b == "b");
 
     // Bad checksum -> no payload returned.
     FrameDecoder d4;

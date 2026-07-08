@@ -17,18 +17,26 @@ struct WsaGuard {
         WSADATA w;
         WSAStartup(MAKEWORD(2, 2), &w);
     }
-    ~WsaGuard() { WSACleanup(); }
+    ~WsaGuard() {
+        WSACleanup();
+    }
 };
 // Process-wide init; constructed on first TcpClient use.
-void ensure_wsa() { static WsaGuard g; }
+void ensure_wsa() {
+    static WsaGuard g;
+}
 } // namespace
 
 using R0 = irida::base::Result<std::monostate>;
 using Rn = irida::base::Result<size_t>;
 
-TcpClient::~TcpClient() { close(); }
+TcpClient::~TcpClient() {
+    close();
+}
 
-TcpClient::TcpClient(TcpClient&& o) noexcept : sock_(o.sock_) { o.sock_ = -1; }
+TcpClient::TcpClient(TcpClient&& o) noexcept : sock_(o.sock_) {
+    o.sock_ = -1;
+}
 TcpClient& TcpClient::operator=(TcpClient&& o) noexcept {
     if (this != &o) {
         close();
@@ -63,8 +71,7 @@ R0 TcpClient::connect(std::string_view host, uint16_t port) {
 Rn TcpClient::send(std::span<const std::byte> data) {
     if (sock_ < 0)
         return Rn::err("send: not connected");
-    int n = ::send(static_cast<SOCKET>(sock_),
-                   reinterpret_cast<const char*>(data.data()),
+    int n = ::send(static_cast<SOCKET>(sock_), reinterpret_cast<const char*>(data.data()),
                    static_cast<int>(data.size()), 0);
     if (n == SOCKET_ERROR)
         return Rn::err("send() failed");

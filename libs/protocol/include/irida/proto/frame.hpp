@@ -15,11 +15,11 @@ bool is_ack(char c);
 // Leading '+'/'-' ack bytes are consumed silently. Bad-checksum packets are
 // dropped (return no payload for that packet).
 class FrameDecoder {
-public:
+  public:
     void feed(std::string_view bytes);
     std::optional<std::string> next_payload();
 
-private:
+  private:
     std::string buf_;
 };
 

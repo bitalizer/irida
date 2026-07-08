@@ -41,8 +41,7 @@ int main() {
     StopReply t_short2 = parse_stop_reply("T0");
     assert(t_short2.kind == StopReply::Signal && t_short2.info.empty());
     StopReply t_sig_only = parse_stop_reply("T05");
-    assert(t_sig_only.kind == StopReply::Signal && t_sig_only.code == 5 &&
-           t_sig_only.info.empty());
+    assert(t_sig_only.kind == StopReply::Signal && t_sig_only.code == 5 && t_sig_only.info.empty());
 
     // Empty payload -> Unknown, no crash.
     StopReply empty = parse_stop_reply("");

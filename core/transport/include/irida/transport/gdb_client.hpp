@@ -14,7 +14,7 @@
 namespace irida::transport {
 
 class GdbClient {
-public:
+  public:
     irida::base::Result<std::monostate> connect(std::string_view host, uint16_t port);
     irida::base::Result<std::vector<std::byte>> read_registers();
     irida::base::Result<std::vector<std::byte>> read_memory(uint64_t addr, uint64_t len);
@@ -27,7 +27,7 @@ public:
     irida::base::Result<irida::proto::StopReply> halt_reason();
     void disconnect();
 
-private:
+  private:
     // Send a payload framed, consume the ack, and return the next reply payload.
     irida::base::Result<std::string> transact(std::string_view payload);
 

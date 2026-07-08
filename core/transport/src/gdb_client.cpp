@@ -84,8 +84,7 @@ Result<std::monostate> GdbClient::set_breakpoint(int type, uint64_t addr, int ki
 }
 
 Result<std::monostate> GdbClient::remove_breakpoint(int type, uint64_t addr, int kind) {
-    return expect_ok(transact(proto::req_remove_breakpoint(type, addr, kind)),
-                     "remove_breakpoint");
+    return expect_ok(transact(proto::req_remove_breakpoint(type, addr, kind)), "remove_breakpoint");
 }
 
 static Result<proto::StopReply> as_stop(Result<std::string> t) {
@@ -95,12 +94,18 @@ static Result<proto::StopReply> as_stop(Result<std::string> t) {
     return R::ok(proto::parse_stop_reply(t.value()));
 }
 
-Result<proto::StopReply> GdbClient::cont() { return as_stop(transact(proto::req_continue())); }
-Result<proto::StopReply> GdbClient::step() { return as_stop(transact(proto::req_step())); }
+Result<proto::StopReply> GdbClient::cont() {
+    return as_stop(transact(proto::req_continue()));
+}
+Result<proto::StopReply> GdbClient::step() {
+    return as_stop(transact(proto::req_step()));
+}
 Result<proto::StopReply> GdbClient::halt_reason() {
     return as_stop(transact(proto::req_halt_reason()));
 }
 
-void GdbClient::disconnect() { sock_.close(); }
+void GdbClient::disconnect() {
+    sock_.close();
+}
 
 } // namespace irida::transport

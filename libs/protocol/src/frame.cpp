@@ -23,7 +23,9 @@ std::string frame(std::string_view payload) {
     return out;
 }
 
-bool is_ack(char c) { return c == '+' || c == '-'; }
+bool is_ack(char c) {
+    return c == '+' || c == '-';
+}
 
 static int hexval(char c) {
     if (c >= '0' && c <= '9')
@@ -35,7 +37,9 @@ static int hexval(char c) {
     return -1;
 }
 
-void FrameDecoder::feed(std::string_view bytes) { buf_.append(bytes); }
+void FrameDecoder::feed(std::string_view bytes) {
+    buf_.append(bytes);
+}
 
 std::optional<std::string> FrameDecoder::next_payload() {
     // Strip any leading ack bytes.
@@ -57,8 +61,7 @@ std::optional<std::string> FrameDecoder::next_payload() {
     std::string payload = buf_.substr(start + 1, hash - start - 1);
     int hi = hexval(buf_[hash + 1]);
     int lo = hexval(buf_[hash + 2]);
-    bool good = hi >= 0 && lo >= 0 &&
-                static_cast<uint8_t>((hi << 4) | lo) == checksum(payload);
+    bool good = hi >= 0 && lo >= 0 && static_cast<uint8_t>((hi << 4) | lo) == checksum(payload);
     buf_.erase(0, hash + 3);
     if (!good)
         return std::nullopt;
