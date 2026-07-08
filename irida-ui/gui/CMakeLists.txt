@@ -1,12 +1,24 @@
 # SPDX-License-Identifier: BUSL-1.1
-find_package(Qt6 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Svg)
 set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
 
 add_executable(irida_gui
-  src/main.cpp
-  src/main_window.cpp
-  src/disasm_view.cpp)
-target_link_libraries(irida_gui PRIVATE irida_capi irida_mock Qt6::Widgets)
+  src/app/main.cpp
+  src/app/main_window.cpp
+  src/theme/icons.cpp
+  src/session/debug_controller.cpp
+  src/widgets/irida_table_view.cpp
+  src/layouts/cpu_widget.cpp
+  src/panels/disassembly/disassembly_panel.cpp
+  src/panels/registers/registers_panel.cpp
+  src/panels/memory/memory_panel.cpp
+  src/panels/memory/stack_panel.cpp
+  src/panels/symbols/modules_panel.cpp
+  src/panels/execution/breakpoints_panel.cpp
+  resources/icons.qrc)
+target_include_directories(irida_gui PRIVATE src)
+target_link_libraries(irida_gui PRIVATE irida_capi irida_mock Qt6::Widgets Qt6::Svg)
 irida_set_warnings(irida_gui)
 
 add_subdirectory(tests)

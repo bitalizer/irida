@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
+#include "app/main_window.hpp"
 #include "irida/mock/mock_backend.h"
-#include "main_window.hpp"
 #include <QApplication>
 
 int main(int argc, char** argv) {
