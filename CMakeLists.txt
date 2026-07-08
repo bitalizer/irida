@@ -16,6 +16,7 @@ enable_testing()
 
 add_subdirectory(libs/base)
 add_subdirectory(libs/protocol)
+add_subdirectory(libs/host)
 add_subdirectory(capi)
 add_subdirectory(frontends/mock)
 if(IRIDA_GUI)
