@@ -60,10 +60,10 @@ void IridaTableView::setCell(int row, int col, const QString& text) {
 
 void IridaTableView::applyRowBackground(int row) {
     QColor bg = kDefaultBackground;
-    if (row == currentIpRow_)
-        bg = kIpBackground;
     if (breakpointRows_.contains(row))
         bg = kBreakpointBackground;
+    if (row == currentIpRow_)
+        bg = kIpBackground;
 
     for (int col = 0; col < columnCount(); ++col) {
         ensureRow(row);

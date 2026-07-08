@@ -71,17 +71,15 @@ void TestTableView::breakpointDoesNotClobberIpBackground() {
     view.setCurrentIpRow(0);
     QColor ipColor = view.item(0, 0)->background().color();
 
-    // Marking the same row as a breakpoint must not erase the IP row's
-    // distinguishing background/arrow relationship silently: the gutter
-    // still shows the breakpoint dot, and the row keeps a highlighted
-    // (non-default) background.
+    // Marking the same row as a breakpoint must not hide the current-IP
+    // highlight. The gutter shows the breakpoint dot (●), and the row
+    // background stays the IP color, not the breakpoint color.
     view.setBreakpointRow(0, true);
     QCOMPARE(view.item(0, 0)->text(), QString::fromUtf8(kBreakpointDot));
-    QVERIFY(view.item(0, 0)->background().color() != QColor(Qt::transparent));
-    QVERIFY(view.item(0, 0)->background().color() != ipColor);
+    QCOMPARE(view.item(0, 0)->background().color(), ipColor);
 
-    // Clearing the breakpoint on the still-current IP row restores the IP
-    // background instead of leaving it default/uncolored.
+    // Clearing the breakpoint on the still-current IP row keeps the IP
+    // background (no change needed).
     view.setBreakpointRow(0, false);
     QCOMPARE(view.item(0, 0)->background().color(), ipColor);
 }
