@@ -8,3 +8,5 @@ add_executable(irida_gui
   src/disasm_view.cpp)
 target_link_libraries(irida_gui PRIVATE irida_capi irida_mock Qt6::Widgets)
 irida_set_warnings(irida_gui)
+
+add_subdirectory(tests)
