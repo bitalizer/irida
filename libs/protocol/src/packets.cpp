@@ -77,8 +77,9 @@ StopReply parse_stop_reply(std::string_view p) {
         break;
     case 'T': {
         r.kind = StopReply::Signal;
-        // key:val; pairs after the 2-digit signal
-        std::string_view rest = p.substr(3);
+        // key:val; pairs after the 2-digit signal. Guard against a short/
+        // malformed reply (e.g. "T" or "T0") whose substr(3) would throw.
+        std::string_view rest = p.size() > 3 ? p.substr(3) : std::string_view{};
         size_t i = 0;
         while (i < rest.size()) {
             size_t semi = rest.find(';', i);
