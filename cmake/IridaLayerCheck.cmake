@@ -1,10 +1,13 @@
 # SPDX-License-Identifier: BUSL-1.1
 # Assert allowed direct dependencies per target. Fails configure on violation.
 # Allowed edges (values may only be linked BY the key):
-#   irida_base  -> (none)
-#   irida_capi  -> irida_base
-#   irida_mock  -> irida_capi
-#   irida_gui   -> irida_capi, irida_mock, Qt6::Widgets
+#   irida_base       -> (none)
+#   irida_proto      -> irida_base
+#   irida_host       -> irida_base  (+ ws2_32 system lib, not checked)
+#   irida_transport  -> irida_proto, irida_host, irida_base
+#   irida_capi       -> irida_base
+#   irida_mock       -> irida_capi
+#   irida_gui        -> irida_capi, irida_mock, Qt6::Widgets
 function(irida_assert_deps target)
   set(allowed ${ARGN})
   get_target_property(links ${target} LINK_LIBRARIES)
@@ -24,6 +27,9 @@ function(irida_assert_deps target)
 endfunction()
 
 function(irida_run_layer_check)
+  irida_assert_deps(irida_proto irida_base)
+  irida_assert_deps(irida_host irida_base ws2_32)
+  irida_assert_deps(irida_transport irida_proto irida_host irida_base)
   irida_assert_deps(irida_capi irida_base)
   irida_assert_deps(irida_mock irida_capi)
   if(TARGET irida_gui)
