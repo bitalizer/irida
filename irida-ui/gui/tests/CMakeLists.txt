@@ -20,3 +20,17 @@ target_include_directories(test_debug_controller PRIVATE
 target_link_libraries(test_debug_controller PRIVATE irida_capi irida_mock Qt6::Test Qt6::Widgets)
 irida_set_warnings(test_debug_controller)
 add_test(NAME gui.debug_controller COMMAND test_debug_controller)
+
+add_executable(test_panels_core
+  test_panels_core.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../src/widgets/irida_table_view.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../src/session/debug_controller.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../src/panels/disassembly/disassembly_panel.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../src/panels/registers/registers_panel.cpp)
+target_include_directories(test_panels_core PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/../src
+  ${CMAKE_SOURCE_DIR}/irida-api/include
+  ${CMAKE_SOURCE_DIR}/irida-ui/mock/include)
+target_link_libraries(test_panels_core PRIVATE irida_capi irida_mock Qt6::Test Qt6::Widgets)
+irida_set_warnings(test_panels_core)
+add_test(NAME gui.panels_core COMMAND test_panels_core)
