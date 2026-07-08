@@ -62,3 +62,20 @@ target_include_directories(test_panels_side PRIVATE
 target_link_libraries(test_panels_side PRIVATE irida_capi irida_mock Qt6::Test Qt6::Widgets)
 irida_set_warnings(test_panels_side)
 add_test(NAME gui.panels_side COMMAND test_panels_side)
+
+add_executable(test_cpu_widget
+  test_cpu_widget.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../src/widgets/irida_table_view.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../src/session/debug_controller.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../src/panels/disassembly/disassembly_panel.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../src/panels/registers/registers_panel.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../src/panels/memory/memory_panel.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../src/panels/memory/stack_panel.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../src/layouts/cpu_widget.cpp)
+target_include_directories(test_cpu_widget PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/../src
+  ${CMAKE_SOURCE_DIR}/irida-api/include
+  ${CMAKE_SOURCE_DIR}/irida-ui/mock/include)
+target_link_libraries(test_cpu_widget PRIVATE irida_capi irida_mock Qt6::Test Qt6::Widgets)
+irida_set_warnings(test_cpu_widget)
+add_test(NAME gui.cpu_widget COMMAND test_cpu_widget)
