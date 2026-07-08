@@ -5,3 +5,5 @@ target_include_directories(irida_capi
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(irida_capi PRIVATE irida_base)
 irida_set_warnings(irida_capi)
+
+add_subdirectory(tests)
