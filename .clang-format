@@ -1,0 +1,6 @@
+# SPDX-License-Identifier: BUSL-1.1
+BasedOnStyle: LLVM
+IndentWidth: 4
+ColumnLimit: 100
+PointerAlignment: Left
+AllowShortFunctionsOnASingleLine: Empty

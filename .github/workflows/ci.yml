@@ -1,0 +1,48 @@
+# SPDX-License-Identifier: BUSL-1.1
+name: ci
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  headless:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enable MSVC developer environment
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Configure (headless)
+        run: cmake --preset headless-debug
+      - name: Build (headless)
+        run: cmake --build --preset headless-debug
+      - name: Test (headless)
+        run: ctest --preset headless-debug
+
+  gui:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enable MSVC developer environment
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.*'
+          arch: win64_msvc2022_64
+      - name: Configure (gui)
+        run: cmake --preset gui-debug -DCMAKE_PREFIX_PATH="${env:QT_ROOT_DIR}"
+      - name: Build (gui)
+        run: cmake --build --preset gui-debug
+      - name: Test (gui)
+        run: ctest --preset gui-debug
+
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: clang-format check
+        run: |
+          sudo apt-get update && sudo apt-get install -y clang-format-18
+          find libs capi frontends -regex '.*\.\(cpp\|hpp\|h\)' \
+            | xargs clang-format-18 --dry-run --Werror
