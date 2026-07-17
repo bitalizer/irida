@@ -1,18 +1,20 @@
 // SPDX-License-Identifier: BUSL-1.1
+#include "irida/base/bytes.hpp"
 #include "irida/target/register_set.hpp"
 #include <cassert>
 #include <cstddef>
 #include <vector>
 
+using irida::base::Bytes;
 using irida::target::RegisterSet;
 
 namespace {
 
-std::vector<std::byte> make_g_block() {
+Bytes make_g_block() {
     // 17 little-endian 64-bit slots (rax..r15, rip) + one 32-bit eflags slot.
     // Slot i (64-bit) gets value (i + 1) repeated as its low byte pattern so
     // decoding is easy to verify: slot 0 -> 0x01, slot 1 -> 0x02, etc.
-    std::vector<std::byte> block;
+    Bytes block;
     for (int slot = 0; slot < 17; ++slot) {
         for (int b = 0; b < 8; ++b) {
             // Little-endian: least-significant byte first. Encode the slot
@@ -59,7 +61,7 @@ int main() {
     assert(regs.all().size() >= 18);
 
     // Short block: decode what's present, missing regs simply absent.
-    std::vector<std::byte> short_block(16, std::byte{0}); // only rax, rbx present (2 slots)
+    Bytes short_block(16, std::byte{0}); // only rax, rbx present (2 slots)
     short_block[0] = std::byte{0xAA};
     auto decoded_short = RegisterSet::decode(short_block);
     assert(decoded_short.has_value());

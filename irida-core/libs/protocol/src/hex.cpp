@@ -3,6 +3,8 @@
 
 namespace irida::proto {
 
+using irida::base::Bytes;
+
 std::string hex_encode(std::span<const std::byte> bytes) {
     static const char* digits = "0123456789abcdef";
     std::string out;
@@ -25,11 +27,11 @@ static int hexval(char c) {
     return -1;
 }
 
-irida::base::Result<std::vector<std::byte>> hex_decode(std::string_view hex) {
-    using R = irida::base::Result<std::vector<std::byte>>;
+irida::base::Result<Bytes> hex_decode(std::string_view hex) {
+    using R = irida::base::Result<Bytes>;
     if (hex.size() % 2 != 0)
         return R::err("hex_decode: odd length");
-    std::vector<std::byte> out;
+    Bytes out;
     out.reserve(hex.size() / 2);
     for (size_t i = 0; i < hex.size(); i += 2) {
         int hi = hexval(hex[i]);

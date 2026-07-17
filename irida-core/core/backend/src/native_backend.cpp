@@ -11,6 +11,7 @@
 
 namespace irida::backend {
 
+using irida::base::Bytes;
 using irida::base::Result;
 namespace host = irida::host;
 
@@ -48,7 +49,7 @@ RegisterProfile make_native_x86_64_profile() {
     return profile;
 }
 
-void write_rip(std::vector<std::byte>& block, uint64_t rip) {
+void write_rip(Bytes& block, uint64_t rip) {
     if (block.size() >= kRipOffset + sizeof(uint64_t)) {
         std::memcpy(block.data() + kRipOffset, &rip, sizeof(uint64_t));
     }
@@ -207,8 +208,8 @@ Result<std::monostate> NativeBackend::request_stop() {
     return dbg_->request_stop();
 }
 
-Result<std::vector<std::byte>> NativeBackend::read_registers() {
-    using R = Result<std::vector<std::byte>>;
+Result<Bytes> NativeBackend::read_registers() {
+    using R = Result<Bytes>;
     if (!dbg_.has_value())
         return R::err("NativeBackend: read_registers called without an attached target");
     return dbg_->read_registers(dbg_->primary_thread());
@@ -225,8 +226,8 @@ const RegisterProfile& NativeBackend::register_profile() const {
     return profile_;
 }
 
-Result<std::vector<std::byte>> NativeBackend::read_memory(uint64_t addr, uint64_t len) {
-    using R = Result<std::vector<std::byte>>;
+Result<Bytes> NativeBackend::read_memory(uint64_t addr, uint64_t len) {
+    using R = Result<Bytes>;
     if (!dbg_.has_value())
         return R::err("NativeBackend: read_memory called without an attached target");
     return dbg_->read_memory(addr, len);

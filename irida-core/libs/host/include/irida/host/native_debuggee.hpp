@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 // Copyright (c) 2026 Bitalizer.
 #pragma once
+#include "irida/base/bytes.hpp"
 #include "irida/base/result.hpp"
 #include <cstddef>
 #include <cstdint>
@@ -52,11 +53,11 @@ class NativeDebuggee {
     irida::base::Result<std::monostate> resume_single_step(); // set TF, then continue
     irida::base::Result<std::monostate> request_stop();       // DebugBreakProcess
 
-    irida::base::Result<std::vector<std::byte>> read_registers(uint32_t thread_id);
+    irida::base::Result<irida::base::Bytes> read_registers(uint32_t thread_id);
     irida::base::Result<std::monostate> write_registers(uint32_t thread_id,
                                                         std::span<const std::byte> block);
 
-    irida::base::Result<std::vector<std::byte>> read_memory(uint64_t addr, uint64_t len);
+    irida::base::Result<irida::base::Bytes> read_memory(uint64_t addr, uint64_t len);
     irida::base::Result<std::monostate> write_memory(uint64_t addr,
                                                      std::span<const std::byte> data);
 

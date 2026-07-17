@@ -4,6 +4,7 @@
 
 namespace irida::target {
 
+using irida::base::Bytes;
 using irida::base::Result;
 
 MemoryCache::MemoryCache(irida::backend::Backend& backend) : backend_(&backend) {}
@@ -14,21 +15,21 @@ void MemoryCache::set_epoch(uint64_t epoch) {
     cur_.clear();
 }
 
-Result<std::vector<std::byte>> MemoryCache::read_page(uint64_t page_addr) {
+Result<Bytes> MemoryCache::read_page(uint64_t page_addr) {
     if (auto it = cur_.find(page_addr); it != cur_.end())
-        return Result<std::vector<std::byte>>::ok(it->second);
+        return Result<Bytes>::ok(it->second);
 
     auto fetched = backend_->read_memory(page_addr, kPageSize);
     if (!fetched.has_value())
-        return Result<std::vector<std::byte>>::err(fetched.error());
+        return Result<Bytes>::err(fetched.error());
 
     cur_[page_addr] = fetched.value();
-    return Result<std::vector<std::byte>>::ok(fetched.value());
+    return Result<Bytes>::ok(fetched.value());
 }
 
-Result<std::vector<std::byte>> MemoryCache::read(uint64_t addr, uint64_t len) {
-    using R = Result<std::vector<std::byte>>;
-    std::vector<std::byte> out;
+Result<Bytes> MemoryCache::read(uint64_t addr, uint64_t len) {
+    using R = Result<Bytes>;
+    Bytes out;
     out.reserve(len);
 
     uint64_t pos = addr;

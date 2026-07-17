@@ -15,7 +15,7 @@ const RegisterSet& GuestState::registers() const {
     return registers_;
 }
 
-irida::base::Result<std::vector<std::byte>> GuestState::read(uint64_t addr, uint64_t len) {
+irida::base::Result<irida::base::Bytes> GuestState::read(uint64_t addr, uint64_t len) {
     return cache_->read(addr, len);
 }
 

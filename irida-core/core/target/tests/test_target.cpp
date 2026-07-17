@@ -5,6 +5,7 @@
 // and stop-reply bytes, exercising RegisterSet::decode and the Target
 // stop-reply mapping.
 #include "irida/backend/backend.hpp"
+#include "irida/base/bytes.hpp"
 #include "irida/target/target.hpp"
 #include "mock_backend.hpp"
 #include <cassert>
@@ -13,11 +14,12 @@
 using irida::backend::MockBackend;
 using irida::backend::StopKind;
 using irida::backend::StopReply;
+using irida::base::Bytes;
 using irida::target::Target;
 
 namespace {
-std::vector<std::byte> bytes_from(std::initializer_list<unsigned char> vals) {
-    std::vector<std::byte> out;
+Bytes bytes_from(std::initializer_list<unsigned char> vals) {
+    Bytes out;
     out.reserve(vals.size());
     for (auto v : vals)
         out.push_back(std::byte{v});
@@ -29,8 +31,8 @@ std::vector<std::byte> bytes_from(std::initializer_list<unsigned char> vals) {
 // fully contained within a single planted region, so the planted region for
 // any address MemoryCache will touch must cover its containing page.
 constexpr uint64_t kPageSize = 4096;
-std::vector<std::byte> page_with_prefix(std::initializer_list<unsigned char> prefix) {
-    std::vector<std::byte> page(kPageSize, std::byte{0});
+Bytes page_with_prefix(std::initializer_list<unsigned char> prefix) {
+    Bytes page(kPageSize, std::byte{0});
     size_t i = 0;
     for (auto v : prefix)
         page[i++] = std::byte{v};

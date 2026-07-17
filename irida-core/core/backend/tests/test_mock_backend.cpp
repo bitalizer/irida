@@ -3,6 +3,7 @@
 //
 // Smoke test: the MockBackend test double serves canned registers/memory and a
 // scripted stop sequence through the Backend interface. Proves the seam is real.
+#include "irida/base/bytes.hpp"
 #include "mock_backend.hpp"
 #include <cassert>
 #include <cstddef>
@@ -10,9 +11,10 @@
 using irida::backend::MockBackend;
 using irida::backend::StopKind;
 using irida::backend::StopReply;
+using irida::base::Bytes;
 
-static std::vector<std::byte> bytes_of(std::initializer_list<int> vals) {
-    std::vector<std::byte> out;
+static Bytes bytes_of(std::initializer_list<int> vals) {
+    Bytes out;
     for (int v : vals)
         out.push_back(static_cast<std::byte>(v));
     return out;

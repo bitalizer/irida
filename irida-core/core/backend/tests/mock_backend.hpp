@@ -6,6 +6,7 @@
 // scripted stop sequence, without a real gdb/native transport.
 #pragma once
 #include "irida/backend/backend.hpp"
+#include "irida/base/bytes.hpp"
 #include <cstring>
 #include <map>
 #include <queue>
@@ -15,14 +16,14 @@ namespace irida::backend {
 class MockBackend final : public Backend {
   public:
     // ---- test setup helpers -------------------------------------------------
-    void set_registers(std::vector<std::byte> block) {
+    void set_registers(irida::base::Bytes block) {
         registers_ = std::move(block);
     }
     void set_profile(RegisterProfile profile) {
         profile_ = std::move(profile);
     }
     // Plant bytes at an address so read_memory() serves them.
-    void set_memory(uint64_t addr, std::vector<std::byte> bytes) {
+    void set_memory(uint64_t addr, irida::base::Bytes bytes) {
         memory_[addr] = std::move(bytes);
     }
     // Queue a stop-reply to be returned by the next cont()/step(). If empty,
@@ -52,8 +53,8 @@ class MockBackend final : public Backend {
         return irida::base::Result<std::monostate>::ok(std::monostate{});
     }
 
-    irida::base::Result<std::vector<std::byte>> read_registers() override {
-        return irida::base::Result<std::vector<std::byte>>::ok(registers_);
+    irida::base::Result<irida::base::Bytes> read_registers() override {
+        return irida::base::Result<irida::base::Bytes>::ok(registers_);
     }
     irida::base::Result<std::monostate> write_registers(std::span<const std::byte> block) override {
         registers_.assign(block.begin(), block.end());
@@ -63,16 +64,16 @@ class MockBackend final : public Backend {
         return profile_;
     }
 
-    irida::base::Result<std::vector<std::byte>> read_memory(uint64_t addr, uint64_t len) override {
+    irida::base::Result<irida::base::Bytes> read_memory(uint64_t addr, uint64_t len) override {
         // Serve from any planted region that fully contains [addr, addr+len).
         for (const auto& [base, bytes] : memory_) {
             if (addr >= base && addr + len <= base + bytes.size()) {
                 auto begin = bytes.begin() + static_cast<std::ptrdiff_t>(addr - base);
-                return irida::base::Result<std::vector<std::byte>>::ok(
-                    std::vector<std::byte>(begin, begin + static_cast<std::ptrdiff_t>(len)));
+                return irida::base::Result<irida::base::Bytes>::ok(
+                    irida::base::Bytes(begin, begin + static_cast<std::ptrdiff_t>(len)));
             }
         }
-        return irida::base::Result<std::vector<std::byte>>::err("mock: no memory at address");
+        return irida::base::Result<irida::base::Bytes>::err("mock: no memory at address");
     }
     irida::base::Result<std::monostate> write_memory(uint64_t addr,
                                                      std::span<const std::byte> data) override {
@@ -110,9 +111,9 @@ class MockBackend final : public Backend {
         return irida::base::Result<StopReply>::ok(reply);
     }
 
-    std::vector<std::byte> registers_;
+    irida::base::Bytes registers_;
     RegisterProfile profile_;
-    std::map<uint64_t, std::vector<std::byte>> memory_;
+    std::map<uint64_t, irida::base::Bytes> memory_;
     std::queue<StopReply> stops_;
     BackendCaps caps_{true, true, true, false, false};
 };

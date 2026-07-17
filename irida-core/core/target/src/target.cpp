@@ -5,6 +5,7 @@
 
 namespace irida::target {
 
+using irida::base::Bytes;
 using irida::base::Result;
 namespace proto = irida::proto;
 namespace backend = irida::backend;
@@ -75,7 +76,7 @@ const RegisterSet& Target::registers() const {
     return state_->registers();
 }
 
-Result<std::vector<std::byte>> Target::read_memory(uint64_t addr, uint64_t len) {
+Result<Bytes> Target::read_memory(uint64_t addr, uint64_t len) {
     return state_->read(addr, len);
 }
 

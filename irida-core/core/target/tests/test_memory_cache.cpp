@@ -3,16 +3,18 @@
 // Drives MemoryCache through an injected MockBackend instead of a scripted
 // gdb server/GdbClient — MemoryCache now reads through irida::backend::Backend,
 // not GdbClient directly, so this test exercises that same seam Target uses.
+#include "irida/base/bytes.hpp"
 #include "irida/target/memory_cache.hpp"
 #include "mock_backend.hpp"
 #include <cassert>
 
 using irida::backend::MockBackend;
+using irida::base::Bytes;
 using irida::target::MemoryCache;
 
 namespace {
-std::vector<std::byte> page_of(unsigned char fill, uint64_t size = 4096) {
-    return std::vector<std::byte>(static_cast<size_t>(size), std::byte{fill});
+Bytes page_of(unsigned char fill, uint64_t size = 4096) {
+    return Bytes(static_cast<size_t>(size), std::byte{fill});
 }
 } // namespace
 

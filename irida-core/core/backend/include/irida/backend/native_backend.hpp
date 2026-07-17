@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Bitalizer.
 #pragma once
 #include "irida/backend/backend.hpp"
+#include "irida/base/bytes.hpp"
 #include "irida/host/native_debuggee.hpp"
 #include <map>
 #include <memory>
@@ -17,10 +18,10 @@ class NativeBackend final : public Backend {
     irida::base::Result<StopReply> cont() override;
     irida::base::Result<StopReply> step() override;
     irida::base::Result<std::monostate> request_stop() override;
-    irida::base::Result<std::vector<std::byte>> read_registers() override;
+    irida::base::Result<irida::base::Bytes> read_registers() override;
     irida::base::Result<std::monostate> write_registers(std::span<const std::byte>) override;
     const RegisterProfile& register_profile() const override;
-    irida::base::Result<std::vector<std::byte>> read_memory(uint64_t, uint64_t) override;
+    irida::base::Result<irida::base::Bytes> read_memory(uint64_t, uint64_t) override;
     irida::base::Result<std::monostate> write_memory(uint64_t, std::span<const std::byte>) override;
     irida::base::Result<std::vector<MemMap>> maps() override;
     irida::base::Result<std::vector<Module>> modules() override;

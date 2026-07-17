@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 #pragma once
 #include "irida/backend/backend.hpp"
+#include "irida/base/bytes.hpp"
 #include "irida/base/result.hpp"
 #include "irida/proto/packets.hpp"
 #include "irida/target/guest_state.hpp"
@@ -35,7 +36,7 @@ class Target {
 
     uint64_t epoch() const;
     const RegisterSet& registers() const;
-    irida::base::Result<std::vector<std::byte>> read_memory(uint64_t addr, uint64_t len);
+    irida::base::Result<irida::base::Bytes> read_memory(uint64_t addr, uint64_t len);
     irida::base::Result<irida::proto::StopReply> cont();
     irida::base::Result<irida::proto::StopReply> step();
     bool memory_changed(uint64_t addr, uint64_t len);

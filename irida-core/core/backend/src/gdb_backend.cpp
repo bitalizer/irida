@@ -11,6 +11,7 @@
 
 namespace irida::backend {
 
+using irida::base::Bytes;
 using irida::base::Result;
 namespace proto = irida::proto;
 
@@ -165,7 +166,7 @@ Result<std::monostate> GdbBackend::request_stop() {
     return Result<std::monostate>::ok(std::monostate{});
 }
 
-Result<std::vector<std::byte>> GdbBackend::read_registers() {
+Result<Bytes> GdbBackend::read_registers() {
     return client_->read_registers();
 }
 
@@ -180,7 +181,7 @@ const RegisterProfile& GdbBackend::register_profile() const {
     return profile_;
 }
 
-Result<std::vector<std::byte>> GdbBackend::read_memory(uint64_t addr, uint64_t len) {
+Result<Bytes> GdbBackend::read_memory(uint64_t addr, uint64_t len) {
     return client_->read_memory(addr, len);
 }
 

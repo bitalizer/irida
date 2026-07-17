@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 #pragma once
+#include "irida/base/bytes.hpp"
 #include "irida/base/result.hpp"
 #include "irida/target/memory_cache.hpp"
 #include "irida/target/register_set.hpp"
@@ -19,7 +20,7 @@ class GuestState {
 
     uint64_t epoch() const;
     const RegisterSet& registers() const;
-    irida::base::Result<std::vector<std::byte>> read(uint64_t addr, uint64_t len);
+    irida::base::Result<irida::base::Bytes> read(uint64_t addr, uint64_t len);
 
   private:
     uint64_t epoch_;

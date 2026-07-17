@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 #pragma once
 #include "irida/backend/backend.hpp"
+#include "irida/base/bytes.hpp"
 #include "irida/base/result.hpp"
 #include <cstddef>
 #include <cstdint>
@@ -21,7 +22,7 @@ class MemoryCache {
     // Rotates cur_ -> prev_ and clears cur_. Call this once per new epoch.
     void set_epoch(uint64_t epoch);
 
-    irida::base::Result<std::vector<std::byte>> read(uint64_t addr, uint64_t len);
+    irida::base::Result<irida::base::Bytes> read(uint64_t addr, uint64_t len);
 
     // True if any byte in [addr, addr+len) differs between the page(s) as
     // cached in the current epoch and as cached in the previous epoch. If a
@@ -32,12 +33,12 @@ class MemoryCache {
   private:
     static constexpr uint64_t kPageSize = 4096;
 
-    irida::base::Result<std::vector<std::byte>> read_page(uint64_t page_addr);
+    irida::base::Result<irida::base::Bytes> read_page(uint64_t page_addr);
 
     irida::backend::Backend* backend_;
     uint64_t epoch_ = 0;
-    std::map<uint64_t, std::vector<std::byte>> cur_;
-    std::map<uint64_t, std::vector<std::byte>> prev_;
+    std::map<uint64_t, irida::base::Bytes> cur_;
+    std::map<uint64_t, irida::base::Bytes> prev_;
 };
 
 } // namespace irida::target

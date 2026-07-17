@@ -4,6 +4,7 @@
 
 namespace irida::transport {
 
+using irida::base::Bytes;
 using irida::base::Result;
 namespace proto = irida::proto;
 
@@ -36,8 +37,8 @@ Result<std::string> GdbClient::transact(std::string_view payload) {
     return R::err("transact: no reply within attempt budget");
 }
 
-Result<std::vector<std::byte>> GdbClient::read_registers() {
-    using R = Result<std::vector<std::byte>>;
+Result<Bytes> GdbClient::read_registers() {
+    using R = Result<Bytes>;
     auto t = transact(proto::req_read_registers());
     if (!t.has_value())
         return R::err(t.error());
@@ -47,8 +48,8 @@ Result<std::vector<std::byte>> GdbClient::read_registers() {
     return R::ok(d.value());
 }
 
-Result<std::vector<std::byte>> GdbClient::read_memory(uint64_t addr, uint64_t len) {
-    using R = Result<std::vector<std::byte>>;
+Result<Bytes> GdbClient::read_memory(uint64_t addr, uint64_t len) {
+    using R = Result<Bytes>;
     auto t = transact(proto::req_read_memory(addr, len));
     if (!t.has_value())
         return R::err(t.error());

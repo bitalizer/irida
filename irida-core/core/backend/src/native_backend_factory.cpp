@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 // Copyright (c) 2026 Bitalizer.
 #include "irida/backend/native_backend.hpp"
+#include "irida/base/bytes.hpp"
 
 namespace irida::backend {
 
@@ -33,9 +34,8 @@ class UnsupportedNativeBackend final : public Backend {
     irida::base::Result<std::monostate> request_stop() override {
         return irida::base::Result<std::monostate>::err("native backend: unsupported platform");
     }
-    irida::base::Result<std::vector<std::byte>> read_registers() override {
-        return irida::base::Result<std::vector<std::byte>>::err(
-            "native backend: unsupported platform");
+    irida::base::Result<irida::base::Bytes> read_registers() override {
+        return irida::base::Result<irida::base::Bytes>::err("native backend: unsupported platform");
     }
     irida::base::Result<std::monostate> write_registers(std::span<const std::byte>) override {
         return irida::base::Result<std::monostate>::err("native backend: unsupported platform");
@@ -43,9 +43,8 @@ class UnsupportedNativeBackend final : public Backend {
     const RegisterProfile& register_profile() const override {
         return profile_;
     }
-    irida::base::Result<std::vector<std::byte>> read_memory(uint64_t, uint64_t) override {
-        return irida::base::Result<std::vector<std::byte>>::err(
-            "native backend: unsupported platform");
+    irida::base::Result<irida::base::Bytes> read_memory(uint64_t, uint64_t) override {
+        return irida::base::Result<irida::base::Bytes>::err("native backend: unsupported platform");
     }
     irida::base::Result<std::monostate> write_memory(uint64_t,
                                                      std::span<const std::byte>) override {

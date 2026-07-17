@@ -2,6 +2,8 @@
 // Copyright (c) 2026 Bitalizer.
 #include "irida/host/native_debuggee.hpp"
 
+#include "irida/base/bytes.hpp"
+
 #ifdef _WIN32
 #include <windows.h>
 
@@ -15,6 +17,8 @@
 
 namespace irida::host {
 
+using irida::base::Bytes;
+
 namespace {
 
 // Our fixed x86-64 register block layout (all slots are 8-byte little-endian,
@@ -25,7 +29,7 @@ namespace {
 constexpr size_t kNumSlots = 32;
 constexpr size_t kRegBlockSize = kNumSlots * sizeof(uint64_t);
 
-void put_slot(std::vector<std::byte>& block, size_t slot_index, uint64_t v) {
+void put_slot(Bytes& block, size_t slot_index, uint64_t v) {
     std::memcpy(block.data() + (slot_index * sizeof(uint64_t)), &v, sizeof(uint64_t));
 }
 
@@ -36,8 +40,8 @@ uint64_t get_slot(std::span<const std::byte> block, size_t slot_index) {
 }
 
 // Serializes a CONTEXT into our fixed register block (documented order above).
-std::vector<std::byte> context_to_block(const CONTEXT& ctx) {
-    std::vector<std::byte> block(kRegBlockSize, std::byte{0});
+Bytes context_to_block(const CONTEXT& ctx) {
+    Bytes block(kRegBlockSize, std::byte{0});
     size_t i = 0;
     put_slot(block, i++, ctx.Rax);
     put_slot(block, i++, ctx.Rbx);
@@ -123,8 +127,8 @@ constexpr DWORD kEflagsTrapFlag = 0x100;
 using R0 = irida::base::Result<std::monostate>;
 using RAttach = irida::base::Result<NativeDebuggee>;
 using REvent = irida::base::Result<DbgEvent>;
-using RRegs = irida::base::Result<std::vector<std::byte>>;
-using RMem = irida::base::Result<std::vector<std::byte>>;
+using RRegs = irida::base::Result<Bytes>;
+using RMem = irida::base::Result<Bytes>;
 using RMaps = irida::base::Result<std::vector<HostMemMap>>;
 using RMods = irida::base::Result<std::vector<HostModule>>;
 
@@ -354,7 +358,7 @@ RMem NativeDebuggee::read_memory(uint64_t addr, uint64_t len) {
     if (!impl_->attached) {
         return RMem::err("read_memory: not attached");
     }
-    std::vector<std::byte> buf(static_cast<size_t>(len));
+    Bytes buf(static_cast<size_t>(len));
     SIZE_T bytes_read = 0;
     if (ReadProcessMemory(impl_->process, reinterpret_cast<LPCVOID>(addr), buf.data(),
                           static_cast<SIZE_T>(len), &bytes_read) == 0) {

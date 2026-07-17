@@ -4,12 +4,14 @@
 // Injects a MockBackend and asserts epoch() advances on step() and read_memory()
 // returns bytes planted via MockBackend::set_memory.
 #include "irida/backend/backend.hpp"
+#include "irida/base/bytes.hpp"
 #include "irida/target/target.hpp"
 #include "mock_backend.hpp"
 #include <cassert>
 #include <memory>
 
 using irida::backend::MockBackend;
+using irida::base::Bytes;
 using irida::target::Target;
 
 namespace {
@@ -23,9 +25,9 @@ int main() {
     auto mock = std::make_unique<MockBackend>();
 
     // Minimal register block so RegisterSet::decode succeeds (refresh_state() runs on attach).
-    mock->set_registers(std::vector<std::byte>(8, std::byte{0}));
+    mock->set_registers(Bytes(8, std::byte{0}));
 
-    std::vector<std::byte> page(kPageSize, std::byte{0});
+    Bytes page(kPageSize, std::byte{0});
     page[0] = std::byte{0xCA};
     page[1] = std::byte{0xFE};
     page[2] = std::byte{0xBA};
