@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: BUSL-1.1
 # irida_backend — the abstract debug-backend seam. GdbBackend (src/gdb_backend.cpp)
 # and NativeBackend (src/native_backend.cpp, WIN32) are added by later phases.
-add_library(irida_backend STATIC src/backend.cpp)
+add_library(irida_backend STATIC src/backend.cpp src/gdb_backend.cpp)
 target_include_directories(irida_backend
   PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}/include
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
