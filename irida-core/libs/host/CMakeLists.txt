@@ -5,7 +5,8 @@ target_include_directories(irida_host
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(irida_host PUBLIC irida_base)
 if(WIN32)
-  target_link_libraries(irida_host PRIVATE ws2_32)
+  target_sources(irida_host PRIVATE src/native_debuggee.cpp)
+  target_link_libraries(irida_host PRIVATE ws2_32 psapi)
 endif()
 irida_set_warnings(irida_host)
 
