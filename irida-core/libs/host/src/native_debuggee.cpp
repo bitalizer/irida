@@ -168,7 +168,7 @@ RAttach NativeDebuggee::attach(uint32_t pid) {
     DebugSetProcessKillOnExit(FALSE);
 
     HANDLE process = OpenProcess(PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION |
-                                     PROCESS_QUERY_INFORMATION,
+                                     PROCESS_QUERY_INFORMATION | PROCESS_CREATE_THREAD,
                                  FALSE, static_cast<DWORD>(pid));
     if (process == nullptr) {
         DebugActiveProcessStop(static_cast<DWORD>(pid));

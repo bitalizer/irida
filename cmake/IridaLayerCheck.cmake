@@ -5,7 +5,7 @@
 #   irida_proto      -> irida_base
 #   irida_host       -> irida_base  (+ ws2_32 system lib, not checked)
 #   irida_transport  -> irida_proto, irida_host, irida_base
-#   irida_backend    -> irida_transport, irida_proto, irida_base
+#   irida_backend    -> irida_transport, irida_proto, irida_host, irida_base
 #   irida_target     -> irida_backend, irida_proto, irida_base
 #   irida_disasm     -> irida_base, Zydis::Zydis
 #   irida_capi       -> irida_base
@@ -33,7 +33,7 @@ function(irida_run_layer_check)
   irida_assert_deps(irida_proto irida_base)
   irida_assert_deps(irida_host irida_base ws2_32)
   irida_assert_deps(irida_transport irida_proto irida_host irida_base)
-  irida_assert_deps(irida_backend irida_transport irida_proto irida_base)
+  irida_assert_deps(irida_backend irida_transport irida_proto irida_host irida_base)
   irida_assert_deps(irida_target irida_backend irida_proto irida_base)
   irida_assert_deps(irida_disasm irida_base Zydis::Zydis)
   irida_assert_deps(irida_capi irida_base)
