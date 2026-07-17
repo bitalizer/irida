@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 #pragma once
+#include "irida/backend/backend.hpp"
 #include "irida/base/result.hpp"
-#include "irida/transport/gdb_client.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <map>
@@ -9,14 +9,14 @@
 
 namespace irida::target {
 
-// Page-cached guest memory reads through GdbClient, keyed to the current
+// Page-cached guest memory reads through a Backend, keyed to the current
 // stop-epoch. Reads are satisfied from cached pages; misses fetch a
-// page-aligned range via GdbClient::read_memory. `set_epoch` rotates the
+// page-aligned range via Backend::read_memory. `set_epoch` rotates the
 // current generation of pages into the "previous epoch" slot so that a
 // later re-read can be diffed against it (self-modification detection).
 class MemoryCache {
   public:
-    explicit MemoryCache(irida::transport::GdbClient& client);
+    explicit MemoryCache(irida::backend::Backend& backend);
 
     // Rotates cur_ -> prev_ and clears cur_. Call this once per new epoch.
     void set_epoch(uint64_t epoch);
@@ -34,7 +34,7 @@ class MemoryCache {
 
     irida::base::Result<std::vector<std::byte>> read_page(uint64_t page_addr);
 
-    irida::transport::GdbClient* client_;
+    irida::backend::Backend* backend_;
     uint64_t epoch_ = 0;
     std::map<uint64_t, std::vector<std::byte>> cur_;
     std::map<uint64_t, std::vector<std::byte>> prev_;

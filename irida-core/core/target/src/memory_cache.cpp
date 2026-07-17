@@ -6,7 +6,7 @@ namespace irida::target {
 
 using irida::base::Result;
 
-MemoryCache::MemoryCache(irida::transport::GdbClient& client) : client_(&client) {}
+MemoryCache::MemoryCache(irida::backend::Backend& backend) : backend_(&backend) {}
 
 void MemoryCache::set_epoch(uint64_t epoch) {
     epoch_ = epoch;
@@ -18,7 +18,7 @@ Result<std::vector<std::byte>> MemoryCache::read_page(uint64_t page_addr) {
     if (auto it = cur_.find(page_addr); it != cur_.end())
         return Result<std::vector<std::byte>>::ok(it->second);
 
-    auto fetched = client_->read_memory(page_addr, kPageSize);
+    auto fetched = backend_->read_memory(page_addr, kPageSize);
     if (!fetched.has_value())
         return Result<std::vector<std::byte>>::err(fetched.error());
 

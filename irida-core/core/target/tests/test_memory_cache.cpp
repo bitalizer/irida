@@ -1,22 +1,31 @@
 // SPDX-License-Identifier: BUSL-1.1
+//
+// Drives MemoryCache through an injected MockBackend instead of a scripted
+// gdb server/GdbClient — MemoryCache now reads through irida::backend::Backend,
+// not GdbClient directly, so this test exercises that same seam Target uses.
 #include "irida/target/memory_cache.hpp"
-#include "irida/transport/gdb_client.hpp"
-#include "scripted_gdb_server.hpp"
+#include "mock_backend.hpp"
 #include <cassert>
 
+using irida::backend::MockBackend;
 using irida::target::MemoryCache;
-using irida::transport::GdbClient;
+
+namespace {
+std::vector<std::byte> page_of(unsigned char fill, uint64_t size = 4096) {
+    return std::vector<std::byte>(static_cast<size_t>(size), std::byte{fill});
+}
+} // namespace
 
 int main() {
-    ScriptedGdbServer server;
-    GdbClient client;
-    auto cr = client.connect("127.0.0.1", server.port());
-    assert(cr.has_value());
+    MockBackend backend;
+    // Page containing 0x1000 initially reads as pattern 0xAA (mirrors the
+    // old ScriptedGdbServer's pre-flip behavior).
+    backend.set_memory(0x1000, page_of(0xAA));
 
-    MemoryCache cache(client);
+    MemoryCache cache(backend);
     cache.set_epoch(1);
 
-    // First read of this page fetches from the (scripted) server: pattern 0xAA.
+    // First read of this page fetches from the (mock) backend: pattern 0xAA.
     auto first = cache.read(0x1000, 16);
     assert(first.has_value());
     assert(first.value().size() == 16);
@@ -24,9 +33,9 @@ int main() {
         assert(b == std::byte{0xAA});
 
     // Second read of the same address within the same epoch is a cache hit
-    // (server would now return something different if asked again, since we
-    // haven't flipped yet the value is still 0xAA either way, but this
-    // exercises the cache path without a second network fetch changing the
+    // (the backend would now return something different if asked again,
+    // since we haven't flipped yet the value is still 0xAA either way, but
+    // this exercises the cache path without a second fetch changing the
     // outcome).
     auto second = cache.read(0x1000, 16);
     assert(second.has_value());
@@ -37,9 +46,9 @@ int main() {
     assert(!cache.changed_since_last_epoch(0x1000, 16));
 
     // Simulate a guest stop: bump the epoch (rotates cur_ -> prev_) and make
-    // the server return different bytes for subsequent memory reads
+    // the backend return different bytes for subsequent memory reads
     // (self-modifying code).
-    server.flip();
+    backend.set_memory(0x1000, page_of(0xBB));
     cache.set_epoch(2);
 
     // changed_since_last_epoch triggers a fresh read for the current epoch
@@ -51,6 +60,5 @@ int main() {
     for (auto b : third.value())
         assert(b == std::byte{0xBB});
 
-    client.disconnect();
     return 0;
 }
