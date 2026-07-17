@@ -63,6 +63,14 @@ typedef struct IridaBackendVTable {
 IridaSession* irida_session_create(const IridaBackendVTable* vt, void* ctx);
 void irida_session_destroy(IridaSession* s);
 
+/* Attaches to a real running process by pid and returns a session backed by
+ * a real irida::target::Target (real registers/memory/disasm/stepping).
+ * Returns NULL if the platform has no native attach support or attach
+ * fails. Sessions created this way own core state and MUST be destroyed
+ * with irida_session_destroy_native(), not irida_session_destroy(). */
+IridaSession* irida_session_create_native(uint32_t pid);
+void irida_session_destroy_native(IridaSession* s);
+
 size_t irida_registers(IridaSession* s, const IridaRegister** out);
 size_t irida_modules(IridaSession* s, const IridaModule** out);
 size_t irida_disasm(IridaSession* s, uint64_t addr, size_t count, const IridaInsnRow** out);
