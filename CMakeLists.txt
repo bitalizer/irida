@@ -23,6 +23,7 @@ add_subdirectory(irida-core/libs/base)
 add_subdirectory(irida-core/libs/protocol)
 add_subdirectory(irida-core/libs/host)
 add_subdirectory(irida-core/core/transport)
+add_subdirectory(irida-core/core/backend)
 add_subdirectory(irida-core/core/target)
 add_subdirectory(irida-core/core/disasm)
 
