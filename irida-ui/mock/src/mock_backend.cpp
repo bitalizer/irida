@@ -20,14 +20,19 @@ struct Insn {
     bool is_call;
 };
 
+// Realistic 64-bit code addresses (ntdll-style base) so the UI shows real
+// full-width addresses, not toy values.
 const Insn kStream[] = {
-    {0x1000, 4, "48 8B 48 08", "mov rcx, [rax+8]", "\"C:\\Windows\\System32\\ntdll.dll\"", false},
-    {0x1004, 7, "48 8D 15 1C 2F 00 00", "lea rdx, [rip+0x2f1c]",
+    {0x00007FF751FA2440ULL, 4, "48 8B 48 08", "mov rcx, [rax+8]",
+     "\"C:\\Windows\\System32\\ntdll.dll\"", false},
+    {0x00007FF751FA2444ULL, 7, "48 8D 15 1C 2F 00 00", "lea rdx, [rip+0x2f1c]",
      "kernel32.dll+0x1a20 (CreateFileW)", false},
-    {0x100b, 2, "31 C0", "xor eax, eax", nullptr, false},
-    {0x100d, 2, "FF D2", "call rdx", nullptr, true},
-    {0x100f, 3, "48 83 C4 28", "add rsp, 0x28", nullptr, false},
-    {0x1012, 1, "C3", "ret", nullptr, false},
+    {0x00007FF751FA244BULL, 2, "31 C0", "xor eax, eax", nullptr, false},
+    {0x00007FF751FA244DULL, 2, "FF D2", "call rdx", nullptr, true},
+    {0x00007FF751FA244FULL, 5, "E8 AC 00 00 00", "call 0x7ff751fa2500", nullptr, true},
+    {0x00007FF751FA2454ULL, 3, "48 83 C4 28", "add rsp, 0x28", nullptr, false},
+    {0x00007FF751FA2457ULL, 2, "75 07", "jne 0x7ff751fa2460", nullptr, false},
+    {0x00007FF751FA2459ULL, 1, "C3", "ret", nullptr, false},
 };
 constexpr size_t kStreamLen = sizeof(kStream) / sizeof(kStream[0]);
 

@@ -27,8 +27,8 @@ class TestPanelsMem : public QObject {
         StackPanel st(&c);
         st.refresh();
         QVERIFY(st.rowCount() >= 1);
-        // first address equals rsp (0x14fe00 from the mock)
-        QVERIFY(st.item(0, 1)->text().contains("14fe00"));
+        // first address equals rsp (0x14FE00 from the mock, shown uppercase)
+        QVERIFY(st.item(0, 1)->text().contains("14FE00"));
         irida_session_destroy(s);
     }
 };

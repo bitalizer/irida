@@ -3,18 +3,14 @@
 #include <QTableWidgetItem>
 #include <QtTest/QtTest>
 
-namespace {
-constexpr const char* kIpArrow = "→";
-constexpr const char* kBreakpointDot = "●";
-} // namespace
-
 class TestTableView : public QObject {
     Q_OBJECT
   private slots:
     void gutterReservesColumnZero();
     void setCellWritesGutterOffsetColumn();
-    void currentIpRowShowsArrowAndClearsPrevious();
-    void breakpointRowTogglesDotAndBackground();
+    void formatAddressIsUppercaseFullWidth();
+    void currentIpRowStateAndClearsPrevious();
+    void breakpointRowStateTogglesAndBackground();
     void breakpointDoesNotClobberIpBackground();
 };
 
@@ -37,31 +33,40 @@ void TestTableView::setCellWritesGutterOffsetColumn() {
     QVERIFY(view.item(0, 0)->text().isEmpty());
 }
 
-void TestTableView::currentIpRowShowsArrowAndClearsPrevious() {
+void TestTableView::formatAddressIsUppercaseFullWidth() {
+    // 64-bit, uppercase, zero-padded to 16 hex digits, no 0x prefix.
+    QCOMPARE(IridaTableView::formatAddress(0x00007FF751FA2440ULL), QString("00007FF751FA2440"));
+    QCOMPARE(IridaTableView::formatAddress(0), QString("0000000000000000"));
+    QCOMPARE(IridaTableView::formatAddress(0xABCDEFULL), QString("0000000000ABCDEF"));
+}
+
+void TestTableView::currentIpRowStateAndClearsPrevious() {
+    // The IP arrow is now drawn by the gutter delegate from row STATE, not glyph
+    // text; assert the state the delegate reads.
     IridaTableView view({"Address"});
     view.setRows(3);
 
     view.setCurrentIpRow(1);
-    QCOMPARE(view.item(1, 0)->text(), QString::fromUtf8(kIpArrow));
+    QVERIFY(view.isCurrentIpRow(1));
 
     view.setCurrentIpRow(2);
-    QVERIFY(view.item(1, 0)->text().isEmpty());
-    QCOMPARE(view.item(2, 0)->text(), QString::fromUtf8(kIpArrow));
+    QVERIFY(!view.isCurrentIpRow(1));
+    QVERIFY(view.isCurrentIpRow(2));
 
     view.setCurrentIpRow(-1);
-    QVERIFY(view.item(2, 0)->text().isEmpty());
+    QVERIFY(!view.isCurrentIpRow(2));
 }
 
-void TestTableView::breakpointRowTogglesDotAndBackground() {
+void TestTableView::breakpointRowStateTogglesAndBackground() {
     IridaTableView view({"Address"});
     view.setRows(2);
 
     view.setBreakpointRow(0, true);
-    QCOMPARE(view.item(0, 0)->text(), QString::fromUtf8(kBreakpointDot));
+    QVERIFY(view.isBreakpointRow(0));
     QVERIFY(view.item(0, 0)->background().color() != QColor(Qt::transparent));
 
     view.setBreakpointRow(0, false);
-    QVERIFY(view.item(0, 0)->text().isEmpty());
+    QVERIFY(!view.isBreakpointRow(0));
 }
 
 void TestTableView::breakpointDoesNotClobberIpBackground() {
@@ -72,14 +77,12 @@ void TestTableView::breakpointDoesNotClobberIpBackground() {
     QColor ipColor = view.item(0, 0)->background().color();
 
     // Marking the same row as a breakpoint must not hide the current-IP
-    // highlight. The gutter shows the breakpoint dot (●), and the row
-    // background stays the IP color, not the breakpoint color.
+    // highlight: the row background stays the IP color (the delegate overlays
+    // the breakpoint dot on the gutter regardless).
     view.setBreakpointRow(0, true);
-    QCOMPARE(view.item(0, 0)->text(), QString::fromUtf8(kBreakpointDot));
+    QVERIFY(view.isBreakpointRow(0));
     QCOMPARE(view.item(0, 0)->background().color(), ipColor);
 
-    // Clearing the breakpoint on the still-current IP row keeps the IP
-    // background (no change needed).
     view.setBreakpointRow(0, false);
     QCOMPARE(view.item(0, 0)->background().color(), ipColor);
 }

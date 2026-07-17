@@ -14,8 +14,9 @@ class TestPanelsCore : public QObject {
         DebugController c(s);
         DisassemblyPanel d(&c);
         QVERIFY(d.rowCount() >= 4);
-        // the row whose address == pc (0x1000) is row 0 -> gutter has arrow
-        QVERIFY(d.item(0, 0)->text().contains(QChar(0x2192)));
+        // the row whose address == pc is row 0 -> marked current-IP (delegate
+        // draws the arrow from this state)
+        QVERIFY(d.isCurrentIpRow(0));
         // instruction text is present in the Instruction column (data col 2 -> table col 3)
         QVERIFY(d.item(0, 3)->text().contains("mov"));
         irida_session_destroy(s);
