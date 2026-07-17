@@ -30,8 +30,9 @@ add_subdirectory(irida-core/core/disasm)
 # --- irida-api: the stable C ABI ---
 add_subdirectory(irida-api)
 
-# --- irida-ui: frontends (mock backend + Qt GUI) ---
+# --- irida-ui: frontends (mock backend + Qt GUI + headless CLI) ---
 add_subdirectory(irida-ui/mock)
+add_subdirectory(irida-ui/cli)
 if(IRIDA_GUI)
   add_subdirectory(irida-ui/gui)
 endif()
