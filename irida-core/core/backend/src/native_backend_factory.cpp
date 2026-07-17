@@ -58,6 +58,10 @@ class UnsupportedNativeBackend final : public Backend {
         return irida::base::Result<std::vector<Module>>::err(
             "native backend: unsupported platform");
     }
+    irida::base::Result<std::vector<ThreadInfo>> threads() override {
+        return irida::base::Result<std::vector<ThreadInfo>>::err(
+            "native backend: unsupported platform");
+    }
     irida::base::Result<std::monostate> set_breakpoint(BpKind, uint64_t, int) override {
         return irida::base::Result<std::monostate>::err("native backend: unsupported platform");
     }

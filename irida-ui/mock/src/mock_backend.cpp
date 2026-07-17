@@ -132,6 +132,25 @@ size_t mock_modules(void*, const IridaModule** out) {
     return sizeof(mods) / sizeof(mods[0]);
 }
 
+size_t mock_maps(void*, const IridaMemMap** out) {
+    static const IridaMemMap maps[] = {
+        {0x00007ff6abcd0000ULL, 0x00007ff6abec0000ULL, 0x5, "ntdll.dll"},    // r-x
+        {0x00007ff6aa000000ULL, 0x00007ff6aa0d0000ULL, 0x5, "kernel32.dll"}, // r-x
+        {0x000000000014f000ULL, 0x0000000000150000ULL, 0x6, ""},             // rw- (stack)
+    };
+    *out = maps;
+    return sizeof(maps) / sizeof(maps[0]);
+}
+
+size_t mock_threads(void*, const IridaThread** out) {
+    static const IridaThread threads[] = {
+        {1001, kStream[0].address, 1},
+        {1002, 0, 0},
+    };
+    *out = threads;
+    return sizeof(threads) / sizeof(threads[0]);
+}
+
 size_t mock_disasm(void*, uint64_t /*addr*/, size_t count, const IridaInsnRow** out) {
     MockState& s = state();
     s.row_view.clear();
@@ -237,10 +256,10 @@ void mock_bp_set_enabled(void*, uint64_t addr, int enabled) {
 }
 
 const IridaBackendVTable kVTable = {
-    mock_registers, mock_modules,       mock_disasm,    mock_run_state,   mock_pc,
-    mock_epoch,     mock_step_into,     mock_step_over, mock_step_out,    mock_cont,
-    mock_brk,       mock_restart,       mock_stop,      mock_read_memory, mock_breakpoints,
-    mock_bp_toggle, mock_bp_set_enabled};
+    mock_registers,   mock_modules,     mock_maps,      mock_threads,       mock_disasm,
+    mock_run_state,   mock_pc,          mock_epoch,     mock_step_into,     mock_step_over,
+    mock_step_out,    mock_cont,        mock_brk,       mock_restart,       mock_stop,
+    mock_read_memory, mock_breakpoints, mock_bp_toggle, mock_bp_set_enabled};
 
 } // namespace
 

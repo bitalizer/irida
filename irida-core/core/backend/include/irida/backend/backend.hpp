@@ -36,8 +36,9 @@ class Backend {
     virtual irida::base::Result<irida::base::Bytes> read_memory(uint64_t addr, uint64_t len) = 0;
     virtual irida::base::Result<std::monostate> write_memory(uint64_t addr,
                                                              std::span<const std::byte> data) = 0;
-    virtual irida::base::Result<std::vector<MemMap>> maps() = 0;    // may be empty
-    virtual irida::base::Result<std::vector<Module>> modules() = 0; // may be empty
+    virtual irida::base::Result<std::vector<MemMap>> maps() = 0;        // may be empty
+    virtual irida::base::Result<std::vector<Module>> modules() = 0;     // may be empty
+    virtual irida::base::Result<std::vector<ThreadInfo>> threads() = 0; // may be empty
 
     // breakpoints
     virtual irida::base::Result<std::monostate> set_breakpoint(BpKind kind, uint64_t addr,

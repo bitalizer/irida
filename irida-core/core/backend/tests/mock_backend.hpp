@@ -87,6 +87,10 @@ class MockBackend final : public Backend {
     irida::base::Result<std::vector<Module>> modules() override {
         return irida::base::Result<std::vector<Module>>::ok({});
     }
+    irida::base::Result<std::vector<ThreadInfo>> threads() override {
+        return irida::base::Result<std::vector<ThreadInfo>>::ok(
+            {ThreadInfo{1234, 0, true}, ThreadInfo{5678, 0, false}});
+    }
 
     irida::base::Result<std::monostate> set_breakpoint(BpKind, uint64_t, int) override {
         return irida::base::Result<std::monostate>::ok(std::monostate{});

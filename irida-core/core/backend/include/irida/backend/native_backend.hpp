@@ -25,6 +25,7 @@ class NativeBackend final : public Backend {
     irida::base::Result<std::monostate> write_memory(uint64_t, std::span<const std::byte>) override;
     irida::base::Result<std::vector<MemMap>> maps() override;
     irida::base::Result<std::vector<Module>> modules() override;
+    irida::base::Result<std::vector<ThreadInfo>> threads() override;
     irida::base::Result<std::monostate> set_breakpoint(BpKind, uint64_t, int) override;
     irida::base::Result<std::monostate> remove_breakpoint(BpKind, uint64_t, int) override;
     BackendCaps caps() const override;

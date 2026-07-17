@@ -31,6 +31,12 @@ struct Module {
     std::string name;
 };
 
+struct ThreadInfo {
+    uint32_t tid = 0;
+    uint64_t pc = 0;
+    bool current = false;
+};
+
 // Normalized stop reason — backend translates its native/wire form into this.
 enum class StopKind { Breakpoint, SingleStep, Signal, Exited, Error, Unknown };
 struct StopReply {

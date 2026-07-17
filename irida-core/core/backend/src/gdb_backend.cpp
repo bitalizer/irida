@@ -200,6 +200,13 @@ Result<std::vector<Module>> GdbBackend::modules() {
     return Result<std::vector<Module>>::ok({});
 }
 
+Result<std::vector<ThreadInfo>> GdbBackend::threads() {
+    // GdbClient has no thread-listing query ('qfThreadInfo' etc.) today;
+    // report no threads rather than inventing a synthetic primary entry
+    // without a real pc to attach to it.
+    return Result<std::vector<ThreadInfo>>::ok({});
+}
+
 Result<std::monostate> GdbBackend::set_breakpoint(BpKind kind, uint64_t addr, int size) {
     return client_->set_breakpoint(to_gdb_type(kind), addr, size);
 }

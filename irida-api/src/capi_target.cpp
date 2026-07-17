@@ -40,6 +40,14 @@ struct IridaCoreCtx {
 
     std::vector<IridaBreakpoint> bp_rows;
 
+    std::vector<IridaModule> module_rows;
+    std::vector<std::string> module_names;
+
+    std::vector<IridaMemMap> map_rows;
+    std::vector<std::string> map_names;
+
+    std::vector<IridaThread> thread_rows;
+
     explicit IridaCoreCtx(Target t) : target(std::move(t)), disasm(make_x86_64_disassembler()) {}
 };
 
@@ -67,9 +75,69 @@ size_t core_registers(void* ctx, const IridaRegister** out) {
     return c->reg_rows.size();
 }
 
-size_t core_modules(void* /*ctx*/, const IridaModule** out) {
+size_t core_modules(void* ctx, const IridaModule** out) {
+    IridaCoreCtx* c = ctx_of(ctx);
     *out = nullptr;
-    return 0;
+
+    auto modules = c->target.modules();
+    if (!modules.has_value())
+        return 0;
+
+    c->module_names.clear();
+    c->module_names.reserve(modules.value().size());
+    for (const auto& m : modules.value())
+        c->module_names.push_back(m.name);
+
+    c->module_rows.clear();
+    c->module_rows.reserve(modules.value().size());
+    for (size_t i = 0; i < modules.value().size(); ++i) {
+        const auto& m = modules.value()[i];
+        c->module_rows.push_back(IridaModule{c->module_names[i].c_str(), m.base, m.size});
+    }
+
+    *out = c->module_rows.empty() ? nullptr : c->module_rows.data();
+    return c->module_rows.size();
+}
+
+size_t core_maps(void* ctx, const IridaMemMap** out) {
+    IridaCoreCtx* c = ctx_of(ctx);
+    *out = nullptr;
+
+    auto maps = c->target.maps();
+    if (!maps.has_value())
+        return 0;
+
+    c->map_names.clear();
+    c->map_names.reserve(maps.value().size());
+    for (const auto& m : maps.value())
+        c->map_names.push_back(m.name);
+
+    c->map_rows.clear();
+    c->map_rows.reserve(maps.value().size());
+    for (size_t i = 0; i < maps.value().size(); ++i) {
+        const auto& m = maps.value()[i];
+        c->map_rows.push_back(IridaMemMap{m.start, m.end, m.perms, c->map_names[i].c_str()});
+    }
+
+    *out = c->map_rows.empty() ? nullptr : c->map_rows.data();
+    return c->map_rows.size();
+}
+
+size_t core_threads(void* ctx, const IridaThread** out) {
+    IridaCoreCtx* c = ctx_of(ctx);
+    *out = nullptr;
+
+    auto threads = c->target.threads();
+    if (!threads.has_value())
+        return 0;
+
+    c->thread_rows.clear();
+    c->thread_rows.reserve(threads.value().size());
+    for (const auto& t : threads.value())
+        c->thread_rows.push_back(IridaThread{t.tid, t.pc, t.current ? 1 : 0});
+
+    *out = c->thread_rows.empty() ? nullptr : c->thread_rows.data();
+    return c->thread_rows.size();
 }
 
 size_t core_disasm(void* ctx, uint64_t addr, size_t count, const IridaInsnRow** out) {
@@ -167,10 +235,10 @@ void core_bp_set_enabled(void* /*ctx*/, uint64_t /*addr*/, int /*enabled*/) {
 }
 
 const IridaBackendVTable kCoreVTable = {
-    core_registers,   core_modules,       core_disasm,    core_run_state,   core_pc,
-    core_state_epoch, core_step_into,     core_step_over, core_step_out,    core_cont,
-    core_brk,         core_restart,       core_stop,      core_read_memory, core_breakpoints,
-    core_bp_toggle,   core_bp_set_enabled};
+    core_registers,   core_modules,     core_maps,        core_threads,       core_disasm,
+    core_run_state,   core_pc,          core_state_epoch, core_step_into,     core_step_over,
+    core_step_out,    core_cont,        core_brk,         core_restart,       core_stop,
+    core_read_memory, core_breakpoints, core_bp_toggle,   core_bp_set_enabled};
 
 } // namespace
 

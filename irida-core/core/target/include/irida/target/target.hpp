@@ -41,6 +41,10 @@ class Target {
     irida::base::Result<irida::proto::StopReply> step();
     bool memory_changed(uint64_t addr, uint64_t len);
 
+    irida::base::Result<std::vector<irida::backend::MemMap>> maps();
+    irida::base::Result<std::vector<irida::backend::Module>> modules();
+    irida::base::Result<std::vector<irida::backend::ThreadInfo>> threads();
+
   private:
     friend class irida::base::Result<Target>;
     Target();

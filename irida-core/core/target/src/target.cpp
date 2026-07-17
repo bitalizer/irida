@@ -104,4 +104,16 @@ bool Target::memory_changed(uint64_t addr, uint64_t len) {
     return cache_->changed_since_last_epoch(addr, len);
 }
 
+Result<std::vector<backend::MemMap>> Target::maps() {
+    return backend_->maps();
+}
+
+Result<std::vector<backend::Module>> Target::modules() {
+    return backend_->modules();
+}
+
+Result<std::vector<backend::ThreadInfo>> Target::threads() {
+    return backend_->threads();
+}
+
 } // namespace irida::target

@@ -23,6 +23,17 @@ typedef struct IridaModule {
     uint64_t base;
     uint64_t size;
 } IridaModule;
+typedef struct IridaMemMap {
+    uint64_t start;
+    uint64_t end;
+    uint8_t perms;
+    const char* name;
+} IridaMemMap;
+typedef struct IridaThread {
+    uint32_t tid;
+    uint64_t pc;
+    int current; /* 0/1 */
+} IridaThread;
 typedef struct IridaInsnRow {
     uint64_t address;
     const char* text;       /* e.g. "mov rcx, [rax+8]" */
@@ -43,6 +54,8 @@ typedef struct IridaBreakpoint {
 typedef struct IridaBackendVTable {
     size_t (*registers)(void* ctx, const IridaRegister** out);
     size_t (*modules)(void* ctx, const IridaModule** out);
+    size_t (*maps)(void* ctx, const IridaMemMap** out);
+    size_t (*threads)(void* ctx, const IridaThread** out);
     size_t (*disasm)(void* ctx, uint64_t addr, size_t count, const IridaInsnRow** out);
     IridaRunState (*run_state)(void* ctx);
     uint64_t (*pc)(void* ctx);
@@ -73,6 +86,8 @@ void irida_session_destroy_native(IridaSession* s);
 
 size_t irida_registers(IridaSession* s, const IridaRegister** out);
 size_t irida_modules(IridaSession* s, const IridaModule** out);
+size_t irida_maps(IridaSession* s, const IridaMemMap** out);
+size_t irida_threads(IridaSession* s, const IridaThread** out);
 size_t irida_disasm(IridaSession* s, uint64_t addr, size_t count, const IridaInsnRow** out);
 
 IridaRunState irida_run_state(IridaSession* s);

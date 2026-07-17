@@ -274,6 +274,35 @@ Result<std::vector<Module>> NativeBackend::modules() {
     return R::ok(std::move(out));
 }
 
+Result<std::vector<ThreadInfo>> NativeBackend::threads() {
+    using R = Result<std::vector<ThreadInfo>>;
+    if (!dbg_.has_value())
+        return R::err("NativeBackend: threads called without an attached target");
+
+    auto host_threads = dbg_->threads();
+    if (!host_threads.has_value())
+        return R::err(host_threads.error());
+
+    uint32_t primary = dbg_->primary_thread();
+
+    std::vector<ThreadInfo> out;
+    out.reserve(host_threads.value().size());
+    for (const auto& t : host_threads.value()) {
+        ThreadInfo info;
+        info.tid = t.tid;
+        info.current = (t.tid == primary);
+        if (info.current) {
+            auto regs = dbg_->read_registers(t.tid);
+            if (regs.has_value()) {
+                auto block = regs.value();
+                std::memcpy(&info.pc, block.data() + kRipOffset, sizeof(info.pc));
+            }
+        }
+        out.push_back(info);
+    }
+    return R::ok(std::move(out));
+}
+
 Result<std::monostate> NativeBackend::set_breakpoint(BpKind kind, uint64_t addr, int size) {
     using R = Result<std::monostate>;
     if (!dbg_.has_value())

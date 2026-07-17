@@ -9,6 +9,7 @@
 
 #include <debugapi.h>
 #include <psapi.h>
+#include <tlhelp32.h>
 #else
 #error "irida::host::NativeDebuggee currently supports Windows only"
 #endif
@@ -131,6 +132,7 @@ using RRegs = irida::base::Result<Bytes>;
 using RMem = irida::base::Result<Bytes>;
 using RMaps = irida::base::Result<std::vector<HostMemMap>>;
 using RMods = irida::base::Result<std::vector<HostModule>>;
+using RThreads = irida::base::Result<std::vector<HostThread>>;
 
 struct NativeDebuggee::Impl {
     DWORD pid = 0;
@@ -483,6 +485,31 @@ RMods NativeDebuggee::modules() {
         out.push_back(std::move(m));
     }
     return RMods::ok(std::move(out));
+}
+
+RThreads NativeDebuggee::threads() {
+    if (!impl_->attached) {
+        return RThreads::err("threads: not attached");
+    }
+
+    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+    if (snapshot == INVALID_HANDLE_VALUE) {
+        return RThreads::err(format_last_error("CreateToolhelp32Snapshot"));
+    }
+
+    std::vector<HostThread> out;
+    THREADENTRY32 te{};
+    te.dwSize = sizeof(te);
+    if (Thread32First(snapshot, &te) != 0) {
+        do {
+            if (te.th32OwnerProcessID == impl_->pid) {
+                out.push_back(HostThread{static_cast<uint32_t>(te.th32ThreadID)});
+            }
+        } while (Thread32Next(snapshot, &te) != 0);
+    }
+    CloseHandle(snapshot);
+
+    return RThreads::ok(std::move(out));
 }
 
 R0 NativeDebuggee::set_hw_exec_bp(int slot, uint64_t addr) {

@@ -36,6 +36,26 @@ size_t irida_modules(IridaSession* s, const IridaModule** out) {
     return s->vt.modules(s->ctx, out);
 }
 
+size_t irida_maps(IridaSession* s, const IridaMemMap** out) {
+    if (!out)
+        return 0;
+    if (!s || !s->vt.maps) {
+        *out = nullptr;
+        return 0;
+    }
+    return s->vt.maps(s->ctx, out);
+}
+
+size_t irida_threads(IridaSession* s, const IridaThread** out) {
+    if (!out)
+        return 0;
+    if (!s || !s->vt.threads) {
+        *out = nullptr;
+        return 0;
+    }
+    return s->vt.threads(s->ctx, out);
+}
+
 size_t irida_disasm(IridaSession* s, uint64_t addr, size_t count, const IridaInsnRow** out) {
     if (!out)
         return 0;

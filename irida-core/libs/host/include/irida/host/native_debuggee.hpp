@@ -31,6 +31,9 @@ struct HostModule {
     uint64_t base, size;
     std::string name;
 };
+struct HostThread {
+    uint32_t tid;
+};
 
 // Raw x86-64 register block in a fixed layout; NativeDebuggee converts Win32 CONTEXT
 // to/from this so callers never see CONTEXT. 32 little-endian 8-byte slots in order:
@@ -63,6 +66,7 @@ class NativeDebuggee {
 
     irida::base::Result<std::vector<HostMemMap>> maps();    // VirtualQueryEx walk
     irida::base::Result<std::vector<HostModule>> modules(); // EnumProcessModulesEx
+    irida::base::Result<std::vector<HostThread>> threads(); // Toolhelp32 thread snapshot
 
     // Hardware breakpoints via DR0-DR3 + DR7 in the thread CONTEXT.
     irida::base::Result<std::monostate> set_hw_exec_bp(int slot, uint64_t addr);
