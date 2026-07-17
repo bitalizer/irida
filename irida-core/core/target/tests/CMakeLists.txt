@@ -15,18 +15,13 @@ target_link_libraries(test_memory_cache PRIVATE irida_target irida_backend)
 irida_set_warnings(test_memory_cache)
 add_test(NAME target.memory_cache COMMAND test_memory_cache)
 
-# Target is driven via an injected MockBackend (Target::attach(unique_ptr<Backend>)),
-# not a mock gdb server — this branch builds+links standalone, without make_gdb_backend()
-# (provided by a separate lane; see the TODO(merge) comment in target.cpp).
+# Target is driven via an injected MockBackend (Target::attach(unique_ptr<Backend>)).
 add_executable(test_target test_target.cpp)
 target_include_directories(test_target PRIVATE ${IRIDA_BACKEND_TEST_INCLUDE})
 target_link_libraries(test_target PRIVATE irida_target irida_backend)
 irida_set_warnings(test_target)
 add_test(NAME target.target COMMAND test_target)
 
-# Backend-seam smoke test (design spec §5): MockBackend injected via
-# Target::attach(unique_ptr<Backend>); proves epoch() advances on step() and
-# read_memory() returns bytes planted via MockBackend::set_memory.
 add_executable(test_backend_smoke test_backend_smoke.cpp)
 target_include_directories(test_backend_smoke PRIVATE ${IRIDA_BACKEND_TEST_INCLUDE})
 target_link_libraries(test_backend_smoke PRIVATE irida_target irida_backend)

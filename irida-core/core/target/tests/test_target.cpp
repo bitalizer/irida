@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
+// Copyright (c) 2026 Bitalizer.
 //
-// Drives Target through an injected MockBackend instead of a mock gdb
-// server/GdbClient. This keeps core/target buildable+testable with zero
-// dependency on make_gdb_backend() (implemented in a separate lane). The
-// same canned g-block/memory/stop-reply bytes the old mock gdb server used
-// are fed through MockBackend so the identical RegisterSet::decode and
-// Target reverse-mapping paths are exercised.
+// Drives Target through an injected MockBackend fed canned g-block, memory,
+// and stop-reply bytes, exercising RegisterSet::decode and the Target
+// stop-reply mapping.
 #include "irida/backend/backend.hpp"
 #include "irida/target/target.hpp"
 #include "mock_backend.hpp"

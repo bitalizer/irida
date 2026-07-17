@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
+// Copyright (c) 2026 Bitalizer.
 //
-// Backend-seam smoke test (design spec §5): proves Target::attach(unique_ptr<Backend>)
-// is a real seam, not just gdb renamed. Injects a MockBackend and asserts epoch()
-// advances on step() and read_memory() returns bytes planted via MockBackend::set_memory.
+// Injects a MockBackend and asserts epoch() advances on step() and read_memory()
+// returns bytes planted via MockBackend::set_memory.
 #include "irida/backend/backend.hpp"
 #include "irida/target/target.hpp"
 #include "mock_backend.hpp"

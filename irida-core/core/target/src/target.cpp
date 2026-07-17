@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
+// Copyright (c) 2026 Bitalizer.
 #include "irida/target/target.hpp"
 #include <utility>
 
@@ -9,16 +10,6 @@ namespace proto = irida::proto;
 namespace backend = irida::backend;
 
 Target::Target() = default;
-
-// NOTE: Target::attach(host, port) — the GdbBackend convenience overload — lives in its
-// own translation unit, target_gdb_attach.cpp. It calls a forward-declared
-// irida::backend::make_gdb_backend(), which is implemented in a separate lane
-// (core/backend/src/gdb_backend.cpp, not present on this branch). Keeping it in a
-// separate .cpp means the static-lib .obj containing the unresolved reference is only
-// pulled into a link when that overload is actually used — so every test/executable on
-// this branch, which only exercises attach(unique_ptr<Backend>), links standalone
-// without needing make_gdb_backend() to exist yet.
-// TODO(merge): make_gdb_backend() provided by gdb-impl lane.
 
 Result<Target> Target::attach(std::unique_ptr<backend::Backend> new_backend) {
     using R = Result<Target>;
@@ -52,9 +43,8 @@ Result<std::monostate> Target::refresh_state() {
 }
 
 namespace {
-// Target::cont()/step() keep returning irida::proto::StopReply (the wire type) to avoid
-// churning callers/ABI; Backend::cont()/step() return backend::StopReply (our normalized
-// type). This is the small reverse-map back to the wire shape the plan calls for.
+// Target exposes the wire StopReply; Backend returns the normalized backend::StopReply.
+// Map the normalized reason back onto the wire shape.
 proto::StopReply to_proto_stop_reply(const backend::StopReply& s) {
     proto::StopReply out;
     switch (s.kind) {

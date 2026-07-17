@@ -18,8 +18,7 @@ std::vector<std::byte> page_of(unsigned char fill, uint64_t size = 4096) {
 
 int main() {
     MockBackend backend;
-    // Page containing 0x1000 initially reads as pattern 0xAA (mirrors the
-    // old ScriptedGdbServer's pre-flip behavior).
+    // Page containing 0x1000 initially reads as pattern 0xAA, then flips to 0xBB.
     backend.set_memory(0x1000, page_of(0xAA));
 
     MemoryCache cache(backend);

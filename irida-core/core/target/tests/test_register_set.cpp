@@ -36,7 +36,7 @@ int main() {
     assert(decoded.has_value());
     const RegisterSet& regs = decoded.value();
 
-    // Order per spec: rax, rbx, rcx, rdx, rsi, rdi, rbp, rsp, r8-r15, rip (17 slots), then eflags.
+    // Order: rax, rbx, rcx, rdx, rsi, rdi, rbp, rsp, r8-r15, rip (17 slots), then eflags.
     auto rax = regs.get("rax");
     assert(rax.has_value() && *rax == 0);
     auto rbx = regs.get("rbx");

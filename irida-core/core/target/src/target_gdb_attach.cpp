@@ -1,12 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
+// Copyright (c) 2026 Bitalizer.
 //
-// Target::attach(host, port) — the GdbBackend convenience overload — lives in its own
-// translation unit (separate from target.cpp) so that linking it is opt-in: it is the
-// ONLY place on this branch that references irida::backend::make_gdb_backend(), which is
-// implemented in a separate lane (core/backend/src/gdb_backend.cpp) not present here.
-// Executables that don't call attach(host, port) never pull this .obj's unresolved
-// reference into their link.
-// TODO(merge): make_gdb_backend() provided by gdb-impl lane.
+// The GdbBackend attach overload is isolated in its own translation unit so that
+// only executables that call attach(host, port) link against make_gdb_backend().
 #include "irida/target/target.hpp"
 #include <utility>
 

@@ -31,12 +31,11 @@ struct HostModule {
     std::string name;
 };
 
-// A raw x86-64 register block in OUR fixed layout (NativeDebuggee converts CONTEXT<->this
-// so core/backend never sees CONTEXT). Layout documented in native_debuggee.cpp and mirrored
-// by NativeBackend::register_profile().
-// Order: rax,rbx,rcx,rdx,rsi,rdi,rbp,rsp,r8..r15,rip,rflags,cs,ss,ds,es,fs,gs, dr0..dr7.
+// Raw x86-64 register block in a fixed layout; NativeDebuggee converts Win32 CONTEXT
+// to/from this so callers never see CONTEXT. 32 little-endian 8-byte slots in order:
+// rax,rbx,rcx,rdx,rsi,rdi,rbp,rsp,r8..r15,rip,rflags,cs,ss,ds,es,fs,gs,dr0..dr3,dr6,dr7.
 
-// The ONLY class allowed to touch Win32 debug APIs.
+// The only class that touches the Win32 debug APIs.
 class NativeDebuggee {
   public:
     static irida::base::Result<NativeDebuggee> attach(uint32_t pid);
