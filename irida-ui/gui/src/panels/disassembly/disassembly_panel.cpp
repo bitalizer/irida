@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 #include "panels/disassembly/disassembly_panel.hpp"
 #include "session/debug_controller.hpp"
+#include "theme/palette.hpp"
 
 DisassemblyPanel::DisassemblyPanel(DebugController* controller, QWidget* parent)
     : IridaTableView({"Address", "Bytes", "Instruction", "Live-value"}, parent),
       controller_(controller) {
+    installGutterDelegate();
+    installAsmDelegate(2); // syntax-highlight the Instruction column
     connect(controller_, &DebugController::stateChanged, this, &DisassemblyPanel::refresh);
     connect(this, &QTableWidget::cellClicked, this, &DisassemblyPanel::onCellClicked);
     refresh();
@@ -19,10 +22,19 @@ void DisassemblyPanel::refresh() {
     for (size_t i = 0; i < n; ++i) {
         int r = static_cast<int>(i);
         row_addrs_.push_back(rows[i].address);
-        setCell(r, 0, QString("0x%1").arg(rows[i].address, 0, 16));
-        setCell(r, 1, QString()); // bytes column filled by engine later; blank for mock text
+        setCell(r, 0, formatAddress(rows[i].address));
+        if (auto* addrIt = item(r, 0 + gutterColumns()))
+            addrIt->setForeground(theme::address());
+        setCell(r, 1, QString()); // raw bytes: engine data, blank under the mock
         setCell(r, 2, QString::fromUtf8(rows[i].text));
-        setCell(r, 3, rows[i].annotation ? QString::fromUtf8(rows[i].annotation) : QString());
+        // Live-value: our differentiator, painted in the accent color.
+        if (rows[i].annotation) {
+            setCell(r, 3, QString::fromUtf8(rows[i].annotation));
+            if (auto* it = item(r, 3 + gutterColumns()))
+                it->setForeground(theme::liveValue());
+        } else {
+            setCell(r, 3, QString());
+        }
     }
     // breakpoints
     const IridaBreakpoint* bps = nullptr;

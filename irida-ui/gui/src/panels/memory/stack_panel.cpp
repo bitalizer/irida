@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 #include "panels/memory/stack_panel.hpp"
 #include "session/debug_controller.hpp"
+#include "theme/palette.hpp"
+#include <QBrush>
 #include <cstring>
 #include <string_view>
 
@@ -31,9 +33,13 @@ void StackPanel::refresh() {
         uint64_t val = 0;
         if (got == sizeof(buf))
             std::memcpy(&val, buf, sizeof(val));
-        setCell(i, 0, QString("0x%1").arg(addr, 0, 16));
-        setCell(i, 1, QString("0x%1").arg(val, 0, 16));
+        setCell(i, 0, formatAddress(addr));
+        setCell(i, 1, formatAddress(val));
         setCell(i, 2, QString());
+        // The RSP slot (row 0) gets an accent address; other slots recede.
+        if (auto* a = item(i, 0 + gutterColumns()))
+            a->setForeground(i == 0 ? QBrush(theme::rspMarker()) : QBrush(theme::address()));
+        if (auto* v = item(i, 1 + gutterColumns()))
+            v->setForeground(theme::defaultText());
     }
-    setCurrentIpRow(0); // mark the RSP row (row 0) using the same gutter arrow
 }

@@ -19,8 +19,8 @@ void ModulesPanel::refresh() {
         int r = static_cast<int>(i);
         bases_.push_back(mods[i].base);
         setCell(r, 0, QString::fromUtf8(mods[i].name));
-        setCell(r, 1, QString("0x%1").arg(mods[i].base, 0, 16));
-        setCell(r, 2, QString("0x%1").arg(mods[i].size, 0, 16));
+        setCell(r, 1, formatAddress(mods[i].base));
+        setCell(r, 2, QString("0x%1").arg(mods[i].size, 0, 16).toUpper());
     }
 }
 

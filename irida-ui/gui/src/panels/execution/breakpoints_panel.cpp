@@ -19,7 +19,7 @@ void BreakpointsPanel::refresh() {
         int r = static_cast<int>(i);
         addrs_.push_back(bps[i].address);
         setCell(r, 0, bps[i].enabled ? "yes" : "no");
-        setCell(r, 1, QString("0x%1").arg(bps[i].address, 0, 16));
+        setCell(r, 1, formatAddress(bps[i].address));
         setCell(r, 2, bps[i].type == IRIDA_BP_HARDWARE ? "hw" : "sw");
     }
 }

@@ -7,6 +7,10 @@ add_executable(irida_gui
   src/app/main.cpp
   src/app/main_window.cpp
   src/theme/icons.cpp
+  src/theme/palette.cpp
+  src/theme/asm_tokenizer.cpp
+  src/theme/asm_item_delegate.cpp
+  src/theme/gutter_delegate.cpp
   src/session/debug_controller.cpp
   src/widgets/irida_table_view.cpp
   src/layouts/cpu_widget.cpp
