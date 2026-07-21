@@ -75,4 +75,27 @@ QColor bytesText() {
     return QColor(0x76, 0x7c, 0x88); // raw bytes recede
 }
 
+// --- CFG graph view ---
+QColor graphBackground() {
+    return QColor(0x17, 0x18, 0x1c); // slightly darker than panels, canvas feel
+}
+QColor graphBlockBackground() {
+    return QColor(0x24, 0x27, 0x2d);
+}
+QColor graphBlockBorder() {
+    return QColor(0x3a, 0x3e, 0x46);
+}
+QColor graphEntryBorder() {
+    return QColor(0x6f, 0xb4, 0xe6); // blue, matches mnemonic accent
+}
+QColor graphEdgeTaken() {
+    return QColor(0x5c, 0xd6, 0x5c); // green taken branch
+}
+QColor graphEdgeFail() {
+    return QColor(0xe0, 0x3c, 0x3c); // red fall-through
+}
+QColor graphEdgeUncond() {
+    return QColor(0x7f, 0x88, 0x96); // muted grey-blue for a single edge
+}
+
 } // namespace theme

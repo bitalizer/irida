@@ -34,4 +34,13 @@ QColor liveValue();    // the resolved live-value / hint (our differentiator)
 QColor changedValue(); // a register value that changed since the last stop
 QColor bytesText();    // raw instruction bytes column
 
+// --- CFG graph view ---
+QColor graphBackground(); // graph canvas behind the blocks
+QColor graphBlockBackground();
+QColor graphBlockBorder();
+QColor graphEntryBorder(); // highlight border on the entry block
+QColor graphEdgeTaken();   // green: conditional taken branch
+QColor graphEdgeFail();    // red: conditional fall-through
+QColor graphEdgeUncond();  // neutral: single successor
+
 } // namespace theme
