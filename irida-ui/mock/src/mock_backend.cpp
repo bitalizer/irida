@@ -312,12 +312,79 @@ size_t mock_strings(void*, const IridaString** out) {
     return sizeof(strings) / sizeof(strings[0]);
 }
 
-const IridaBackendVTable kVTable = {
-    mock_registers,   mock_modules,     mock_maps,      mock_threads,        mock_disasm,
-    mock_run_state,   mock_pc,          mock_epoch,     mock_step_into,      mock_step_over,
-    mock_step_out,    mock_cont,        mock_brk,       mock_restart,        mock_stop,
-    mock_read_memory, mock_breakpoints, mock_bp_toggle, mock_bp_set_enabled, mock_backtrace,
-    mock_sections,    mock_imports,     mock_exports,   mock_symbols,        mock_strings};
+void mock_analyze(void*) {}
+
+size_t mock_functions(void*, const IridaFunction** out) {
+    static const IridaFunction functions[] = {
+        {0x00007FF751FA2440ULL, 0x1A, "main", 2},
+        {0x00007FF751FA2500ULL, 0x08, "sym.helper", 1},
+    };
+    *out = functions;
+    return sizeof(functions) / sizeof(functions[0]);
+}
+
+size_t mock_function_blocks(void*, uint64_t fn_addr, const IridaBasicBlock** out) {
+    // main: a head block ending in the conditional jump, and the branch tail.
+    static const IridaBasicBlock main_blocks[] = {
+        {0x00007FF751FA2440ULL, 0x19, 0x00007FF751FA2460ULL, 0x00007FF751FA2459ULL},
+        {0x00007FF751FA2459ULL, 0x01, 0, 0},
+    };
+    static const IridaBasicBlock helper_blocks[] = {
+        {0x00007FF751FA2500ULL, 0x08, 0, 0},
+    };
+    if (fn_addr == 0x00007FF751FA2440ULL) {
+        *out = main_blocks;
+        return sizeof(main_blocks) / sizeof(main_blocks[0]);
+    }
+    if (fn_addr == 0x00007FF751FA2500ULL) {
+        *out = helper_blocks;
+        return sizeof(helper_blocks) / sizeof(helper_blocks[0]);
+    }
+    *out = nullptr;
+    return 0;
+}
+
+size_t mock_xrefs_to(void*, uint64_t addr, const IridaXref** out) {
+    static const IridaXref helper_xrefs[] = {
+        {0x00007FF751FA244FULL, 0x00007FF751FA2500ULL, IRIDA_XREF_CALL},
+    };
+    if (addr == 0x00007FF751FA2500ULL) {
+        *out = helper_xrefs;
+        return sizeof(helper_xrefs) / sizeof(helper_xrefs[0]);
+    }
+    *out = nullptr;
+    return 0;
+}
+
+const IridaBackendVTable kVTable = {mock_registers,
+                                    mock_modules,
+                                    mock_maps,
+                                    mock_threads,
+                                    mock_disasm,
+                                    mock_run_state,
+                                    mock_pc,
+                                    mock_epoch,
+                                    mock_step_into,
+                                    mock_step_over,
+                                    mock_step_out,
+                                    mock_cont,
+                                    mock_brk,
+                                    mock_restart,
+                                    mock_stop,
+                                    mock_read_memory,
+                                    mock_breakpoints,
+                                    mock_bp_toggle,
+                                    mock_bp_set_enabled,
+                                    mock_backtrace,
+                                    mock_sections,
+                                    mock_imports,
+                                    mock_exports,
+                                    mock_symbols,
+                                    mock_strings,
+                                    mock_analyze,
+                                    mock_functions,
+                                    mock_function_blocks,
+                                    mock_xrefs_to};
 
 } // namespace
 
