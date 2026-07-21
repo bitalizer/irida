@@ -37,6 +37,9 @@ void XrefsPanel::refresh() {
         case IRIDA_XREF_DATA:
             type = "Data";
             break;
+        default:
+            type = "?";
+            break;
         }
         setCell(r, 2, type);
     }
