@@ -10,7 +10,6 @@ FunctionsPanel::FunctionsPanel(DebugController* controller, QWidget* parent)
 
 void FunctionsPanel::refresh() {
     IridaSession* s = controller_->session();
-    irida_analyze(s);
     const IridaFunction* fns = nullptr;
     size_t n = irida_functions(s, &fns);
     setRows(static_cast<int>(n));

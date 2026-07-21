@@ -25,6 +25,16 @@ class DebugController : public QObject {
     // destructor matching how it was created.
     void setSession(IridaSession* s, SessionKind kind);
 
+    // True while a background analysis pass is running.
+    bool analyzing() const {
+        return analyzing_;
+    }
+
+    // Runs irida_analyze() on a worker thread and emits analysisFinished() when
+    // done (analysisStarted() first). Analysis-dependent views refresh on
+    // analysisFinished rather than calling irida_analyze on the UI thread.
+    void runAnalysis();
+
   public slots:
     // Signals every connected view to reload from the current session. Used to
     // populate panels once after the window is shown, off the construction path.
@@ -43,10 +53,13 @@ class DebugController : public QObject {
   signals:
     void stateChanged();
     void navigationRequested(uint64_t addr);
+    void analysisStarted();
+    void analysisFinished();
 
   private:
     void afterOp(uint64_t epoch_before);
     void destroySession();
     IridaSession* session_;
     SessionKind session_kind_ = SessionKind::Mock;
+    bool analyzing_ = false;
 };

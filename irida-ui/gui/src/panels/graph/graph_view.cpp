@@ -82,7 +82,6 @@ GraphView::GraphView(DebugController* controller, QWidget* parent)
 
 void GraphView::refresh() {
     IridaSession* s = controller_->session();
-    irida_analyze(s);
     if (current_fn_ == 0) {
         const IridaFunction* fns = nullptr;
         size_t n = irida_functions(s, &fns);
@@ -95,7 +94,6 @@ void GraphView::refresh() {
 
 void GraphView::onNavigation(uint64_t addr) {
     IridaSession* s = controller_->session();
-    irida_analyze(s);
     const IridaFunction* fns = nullptr;
     size_t n = irida_functions(s, &fns);
     for (size_t i = 0; i < n; ++i) {

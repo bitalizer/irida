@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 #include "session/debug_controller.hpp"
+#include <QThread>
 
 DebugController::DebugController(IridaSession* session, QObject* parent, SessionKind kind)
     : QObject(parent), session_(session), session_kind_(kind) {}
@@ -34,6 +35,26 @@ void DebugController::setSession(IridaSession* s, SessionKind kind) {
 
 void DebugController::refreshViews() {
     emit stateChanged();
+}
+
+void DebugController::runAnalysis() {
+    if (analyzing_ || !session_)
+        return;
+    analyzing_ = true;
+    emit analysisStarted();
+
+    IridaSession* s = session_;
+    auto* worker = QThread::create([s] { irida_analyze(s); });
+    // When the worker finishes, back on the UI thread: mark done, let the
+    // analysis-dependent views read the freshly built cache, and free the
+    // thread object.
+    connect(worker, &QThread::finished, this, [this, worker] {
+        analyzing_ = false;
+        emit analysisFinished();
+        emit stateChanged();
+        worker->deleteLater();
+    });
+    worker->start();
 }
 
 void DebugController::afterOp(uint64_t epoch_before) {
