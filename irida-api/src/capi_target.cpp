@@ -5,12 +5,15 @@
 #include "irida/binfmt/binary.hpp"
 #include "irida/binfmt/strings.hpp"
 #include "irida/disasm/disassembler.hpp"
+#include "irida/disasm/instruction.hpp"
 #include "irida/irida.h"
 #include "irida/target/target.hpp"
 #include <cstring>
 #include <new>
+#include <optional>
 #include <span>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -24,7 +27,9 @@ using irida::binfmt::BinaryParser;
 using irida::binfmt::make_lief_parser;
 using irida::binfmt::scan_strings;
 using irida::disasm::Disassembler;
+using irida::disasm::Instruction;
 using irida::disasm::make_x86_64_disassembler;
+using irida::disasm::OperandKind;
 using irida::target::Target;
 
 constexpr size_t kMaxInsnBytes = 15; // longest possible x86-64 instruction
@@ -45,6 +50,51 @@ std::string format_bytes(std::span<const std::byte> bytes) {
     return out;
 }
 
+// Builds an addr->display-name map from a parsed BinaryInfo, in the order
+// symbols, exports, imports (each insertion overwrites the previous), so
+// that on an address collision imports (sym.imp.X) win over exports, which
+// win over symbols.
+//
+// module_base/file_base rebase file addresses (RVA/file-VA, as produced by
+// parsing the on-disk PE) into runtime addresses (module_base + (file_addr -
+// file_base)), so the map can be looked up directly with live target
+// addresses. Pass module_base == file_base to keep addresses unrebased (e.g.
+// when no live module base is known, or the addresses are already runtime,
+// as in the mock).
+std::unordered_map<uint64_t, std::string>
+build_symbol_map(const BinaryInfo& bin, uint64_t module_base, uint64_t file_base) {
+    std::unordered_map<uint64_t, std::string> map;
+    auto rebase = [&](uint64_t file_addr) { return module_base + (file_addr - file_base); };
+
+    for (const auto& sym : bin.symbols)
+        map[rebase(sym.addr)] = sym.name;
+
+    for (const auto& exp : bin.exports)
+        map[rebase(exp.addr)] = "sym." + exp.name;
+
+    for (const auto& imp : bin.imports)
+        map[rebase(imp.iat_addr)] = "sym.imp." + imp.name;
+
+    return map;
+}
+
+// Returns the address an instruction refers to (call/jmp/lea/data-ref target)
+// if it plainly has one, else nullopt. Immediate/Pointer operands already
+// carry the resolved absolute target (Zydis resolves rel8/rel32 displacements
+// against the instruction address at decode time). A rip-relative memory
+// operand's target is address-of-next-instruction + disp.
+std::optional<uint64_t> operand_target(const Instruction& insn) {
+    for (const auto& op : insn.operands) {
+        if ((op.kind == OperandKind::Immediate || op.kind == OperandKind::Pointer) && op.imm != 0)
+            return op.imm;
+    }
+    for (const auto& op : insn.operands) {
+        if (op.kind == OperandKind::Memory && op.mem.rip_relative)
+            return static_cast<uint64_t>(insn.address + insn.length + op.mem.disp);
+    }
+    return std::nullopt;
+}
+
 } // namespace
 
 // Owns a real attached Target plus the disassembler and the scratch storage
@@ -61,6 +111,7 @@ struct IridaCoreCtx {
     std::vector<IridaInsnRow> insn_rows;
     std::vector<std::string> insn_text;
     std::vector<std::string> insn_bytes;
+    std::vector<std::string> insn_annot;
 
     std::vector<IridaBreakpoint> bp_rows;
 
@@ -79,6 +130,9 @@ struct IridaCoreCtx {
     std::unique_ptr<BinaryParser> binary_parser = make_lief_parser();
     BinaryInfo main_bin;
     bool binary_parsed = false;
+
+    // addr(runtime) -> display name, built once alongside main_bin.
+    std::unordered_map<uint64_t, std::string> symbol_map;
 
     std::vector<IridaSection> section_rows;
     std::vector<std::string> section_names;
@@ -120,7 +174,26 @@ struct IridaCoreCtx {
             return false;
 
         main_bin = std::move(parsed).value();
+
+        // main_bin's addresses are file-relative (RVA/file-VA using
+        // main_bin.image_base); the live target sees runtime addresses
+        // (the module's load base + RVA). Rebase onto the first module's
+        // live base so the map can be looked up with runtime addresses
+        // straight from decoded instructions.
+        uint64_t module_base = modules.value()[0].base;
+        symbol_map = build_symbol_map(main_bin, module_base, main_bin.image_base);
         return true;
+    }
+
+    // Resolves a runtime address to a display name (sym.imp.X / sym.X /
+    // plain symbol name) using the cached symbol_map, or nullopt if unknown.
+    std::optional<std::string> resolve_symbol(uint64_t addr) {
+        if (!ensure_binary_parsed())
+            return std::nullopt;
+        auto it = symbol_map.find(addr);
+        if (it == symbol_map.end())
+            return std::nullopt;
+        return it->second;
     }
 };
 
@@ -218,6 +291,7 @@ size_t core_disasm(void* ctx, uint64_t addr, size_t count, const IridaInsnRow** 
     c->insn_rows.clear();
     c->insn_text.clear();
     c->insn_bytes.clear();
+    c->insn_annot.clear();
     *out = nullptr;
 
     if (count == 0)
@@ -230,6 +304,7 @@ size_t core_disasm(void* ctx, uint64_t addr, size_t count, const IridaInsnRow** 
     auto insns = c->disasm->decode_linear(bytes.value(), addr, count);
     c->insn_text.reserve(insns.size());
     c->insn_bytes.reserve(insns.size());
+    c->insn_annot.reserve(insns.size());
     c->insn_rows.reserve(insns.size());
     for (const auto& insn : insns) {
         c->insn_text.push_back(insn.text);
@@ -239,7 +314,15 @@ size_t core_disasm(void* ctx, uint64_t addr, size_t count, const IridaInsnRow** 
         len = offset + len <= bytes.value().size() ? len : bytes.value().size() - offset;
         c->insn_bytes.push_back(format_bytes(std::span(bytes.value()).subspan(offset, len)));
 
-        c->insn_rows.push_back(IridaInsnRow{insn.address, c->insn_text.back().c_str(), nullptr,
+        const char* annot = nullptr;
+        if (auto tgt = operand_target(insn)) {
+            if (auto name = c->resolve_symbol(tgt.value())) {
+                c->insn_annot.push_back(std::move(name).value());
+                annot = c->insn_annot.back().c_str();
+            }
+        }
+
+        c->insn_rows.push_back(IridaInsnRow{insn.address, c->insn_text.back().c_str(), annot,
                                             c->insn_bytes.back().c_str()});
     }
 
