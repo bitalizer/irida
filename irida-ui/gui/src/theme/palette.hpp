@@ -43,4 +43,9 @@ QColor graphEdgeTaken();   // green: conditional taken branch
 QColor graphEdgeFail();    // red: conditional fall-through
 QColor graphEdgeUncond();  // neutral: single successor
 
+QColor overviewCode();     // overview bar: executable section band
+QColor overviewData();     // overview bar: writable data band
+QColor overviewReadonly(); // overview bar: read-only band
+QColor overviewMarker();   // overview bar: current-address marker
+
 } // namespace theme
