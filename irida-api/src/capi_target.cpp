@@ -2,6 +2,8 @@
 #include "backend.hpp"
 #include "irida/backend/native_backend.hpp"
 #include "irida/backend/types.hpp"
+#include "irida/binfmt/binary.hpp"
+#include "irida/binfmt/strings.hpp"
 #include "irida/disasm/disassembler.hpp"
 #include "irida/irida.h"
 #include "irida/target/target.hpp"
@@ -17,12 +19,17 @@ namespace {
 using irida::backend::AttachMethod;
 using irida::backend::AttachSpec;
 using irida::backend::make_native_backend;
+using irida::binfmt::BinaryInfo;
+using irida::binfmt::BinaryParser;
+using irida::binfmt::make_lief_parser;
+using irida::binfmt::scan_strings;
 using irida::disasm::Disassembler;
 using irida::disasm::make_x86_64_disassembler;
 using irida::target::Target;
 
 constexpr size_t kMaxInsnBytes = 15; // longest possible x86-64 instruction
 constexpr size_t kMaxBacktraceFrames = 64;
+constexpr uint64_t kStringsScanCap = 1024 * 1024; // cap the memory read for the strings scan
 
 std::string format_bytes(std::span<const std::byte> bytes) {
     static const char* digits = "0123456789ABCDEF";
@@ -67,7 +74,54 @@ struct IridaCoreCtx {
 
     std::vector<IridaThread> thread_rows;
 
+    // Static-binary model: the main module's file is parsed once (lazily,
+    // on first sections/imports/exports/symbols/strings call) and cached.
+    std::unique_ptr<BinaryParser> binary_parser = make_lief_parser();
+    BinaryInfo main_bin;
+    bool binary_parsed = false;
+
+    std::vector<IridaSection> section_rows;
+    std::vector<std::string> section_names;
+
+    std::vector<IridaImport> import_rows;
+    std::vector<std::string> import_names;
+    std::vector<std::string> import_libs;
+
+    std::vector<IridaExport> export_rows;
+    std::vector<std::string> export_names;
+
+    std::vector<IridaSymbol> symbol_rows;
+    std::vector<std::string> symbol_names;
+    std::vector<std::string> symbol_kinds;
+
+    std::vector<IridaString> string_rows;
+    std::vector<std::string> string_texts;
+
     explicit IridaCoreCtx(Target t) : target(std::move(t)), disasm(make_x86_64_disassembler()) {}
+
+    // Lazily parses the main module (first module reported by the target)
+    // as a static binary. Returns false (no throw) if there is no module or
+    // the parse fails, e.g. under a synthetic/mock target with no real file
+    // on disk.
+    bool ensure_binary_parsed() {
+        if (binary_parsed)
+            return main_bin.sections.size() + main_bin.imports.size() + main_bin.exports.size() +
+                       main_bin.symbols.size() >
+                   0;
+
+        binary_parsed = true;
+
+        auto modules = target.modules();
+        if (!modules.has_value() || modules.value().empty())
+            return false;
+
+        auto parsed = binary_parser->parse_file(modules.value()[0].name);
+        if (!parsed.has_value())
+            return false;
+
+        main_bin = std::move(parsed).value();
+        return true;
+    }
 };
 
 namespace {
@@ -295,11 +349,144 @@ void core_bp_set_enabled(void* /*ctx*/, uint64_t /*addr*/, int /*enabled*/) {
     // Backend set_breakpoint/remove_breakpoint wiring deferred; tracked list stays empty.
 }
 
+size_t core_sections(void* ctx, const IridaSection** out) {
+    IridaCoreCtx* c = ctx_of(ctx);
+    c->section_rows.clear();
+    c->section_names.clear();
+    *out = nullptr;
+
+    if (!c->ensure_binary_parsed())
+        return 0;
+
+    const auto& sections = c->main_bin.sections;
+    c->section_names.reserve(sections.size());
+    for (const auto& sec : sections)
+        c->section_names.push_back(sec.name);
+
+    c->section_rows.reserve(sections.size());
+    for (size_t i = 0; i < sections.size(); ++i)
+        c->section_rows.push_back(IridaSection{c->section_names[i].c_str(), sections[i].vaddr,
+                                               sections[i].vsize, sections[i].perms});
+
+    *out = c->section_rows.empty() ? nullptr : c->section_rows.data();
+    return c->section_rows.size();
+}
+
+size_t core_imports(void* ctx, const IridaImport** out) {
+    IridaCoreCtx* c = ctx_of(ctx);
+    c->import_rows.clear();
+    c->import_names.clear();
+    c->import_libs.clear();
+    *out = nullptr;
+
+    if (!c->ensure_binary_parsed())
+        return 0;
+
+    const auto& imports = c->main_bin.imports;
+    c->import_names.reserve(imports.size());
+    c->import_libs.reserve(imports.size());
+    for (const auto& imp : imports) {
+        c->import_names.push_back(imp.name);
+        c->import_libs.push_back(imp.library);
+    }
+
+    c->import_rows.reserve(imports.size());
+    for (size_t i = 0; i < imports.size(); ++i)
+        c->import_rows.push_back(IridaImport{c->import_names[i].c_str(), c->import_libs[i].c_str(),
+                                             imports[i].iat_addr});
+
+    *out = c->import_rows.empty() ? nullptr : c->import_rows.data();
+    return c->import_rows.size();
+}
+
+size_t core_exports(void* ctx, const IridaExport** out) {
+    IridaCoreCtx* c = ctx_of(ctx);
+    c->export_rows.clear();
+    c->export_names.clear();
+    *out = nullptr;
+
+    if (!c->ensure_binary_parsed())
+        return 0;
+
+    const auto& exports = c->main_bin.exports;
+    c->export_names.reserve(exports.size());
+    for (const auto& exp : exports)
+        c->export_names.push_back(exp.name);
+
+    c->export_rows.reserve(exports.size());
+    for (size_t i = 0; i < exports.size(); ++i)
+        c->export_rows.push_back(
+            IridaExport{c->export_names[i].c_str(), exports[i].addr, exports[i].ordinal});
+
+    *out = c->export_rows.empty() ? nullptr : c->export_rows.data();
+    return c->export_rows.size();
+}
+
+size_t core_symbols(void* ctx, const IridaSymbol** out) {
+    IridaCoreCtx* c = ctx_of(ctx);
+    c->symbol_rows.clear();
+    c->symbol_names.clear();
+    c->symbol_kinds.clear();
+    *out = nullptr;
+
+    if (!c->ensure_binary_parsed())
+        return 0;
+
+    const auto& symbols = c->main_bin.symbols;
+    c->symbol_names.reserve(symbols.size());
+    c->symbol_kinds.reserve(symbols.size());
+    for (const auto& sym : symbols) {
+        c->symbol_names.push_back(sym.name);
+        c->symbol_kinds.push_back(sym.kind);
+    }
+
+    c->symbol_rows.reserve(symbols.size());
+    for (size_t i = 0; i < symbols.size(); ++i)
+        c->symbol_rows.push_back(
+            IridaSymbol{c->symbol_names[i].c_str(), symbols[i].addr, c->symbol_kinds[i].c_str()});
+
+    *out = c->symbol_rows.empty() ? nullptr : c->symbol_rows.data();
+    return c->symbol_rows.size();
+}
+
+size_t core_strings(void* ctx, const IridaString** out) {
+    IridaCoreCtx* c = ctx_of(ctx);
+    c->string_rows.clear();
+    c->string_texts.clear();
+    *out = nullptr;
+
+    auto modules = c->target.modules();
+    if (!modules.has_value() || modules.value().empty())
+        return 0;
+
+    const auto& mod = modules.value()[0];
+    uint64_t len = mod.size < kStringsScanCap ? mod.size : kStringsScanCap;
+    if (len == 0)
+        return 0;
+
+    auto bytes = c->target.read_memory(mod.base, len);
+    if (!bytes.has_value())
+        return 0;
+
+    auto found = scan_strings(bytes.value(), mod.base);
+    c->string_texts.reserve(found.size());
+    for (const auto& f : found)
+        c->string_texts.push_back(f.text);
+
+    c->string_rows.reserve(found.size());
+    for (size_t i = 0; i < found.size(); ++i)
+        c->string_rows.push_back(IridaString{found[i].addr, c->string_texts[i].c_str()});
+
+    *out = c->string_rows.empty() ? nullptr : c->string_rows.data();
+    return c->string_rows.size();
+}
+
 const IridaBackendVTable kCoreVTable = {
     core_registers,   core_modules,     core_maps,        core_threads,        core_disasm,
     core_run_state,   core_pc,          core_state_epoch, core_step_into,      core_step_over,
     core_step_out,    core_cont,        core_brk,         core_restart,        core_stop,
-    core_read_memory, core_breakpoints, core_bp_toggle,   core_bp_set_enabled, core_backtrace};
+    core_read_memory, core_breakpoints, core_bp_toggle,   core_bp_set_enabled, core_backtrace,
+    core_sections,    core_imports,     core_exports,     core_symbols,        core_strings};
 
 } // namespace
 

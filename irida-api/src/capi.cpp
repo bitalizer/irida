@@ -155,4 +155,54 @@ size_t irida_backtrace(IridaSession* s, const IridaFrame** out) {
     return s->vt.backtrace(s->ctx, out);
 }
 
+size_t irida_sections(IridaSession* s, const IridaSection** out) {
+    if (!out)
+        return 0;
+    if (!s || !s->vt.sections) {
+        *out = nullptr;
+        return 0;
+    }
+    return s->vt.sections(s->ctx, out);
+}
+
+size_t irida_imports(IridaSession* s, const IridaImport** out) {
+    if (!out)
+        return 0;
+    if (!s || !s->vt.imports) {
+        *out = nullptr;
+        return 0;
+    }
+    return s->vt.imports(s->ctx, out);
+}
+
+size_t irida_exports(IridaSession* s, const IridaExport** out) {
+    if (!out)
+        return 0;
+    if (!s || !s->vt.get_exports) {
+        *out = nullptr;
+        return 0;
+    }
+    return s->vt.get_exports(s->ctx, out);
+}
+
+size_t irida_symbols(IridaSession* s, const IridaSymbol** out) {
+    if (!out)
+        return 0;
+    if (!s || !s->vt.symbols) {
+        *out = nullptr;
+        return 0;
+    }
+    return s->vt.symbols(s->ctx, out);
+}
+
+size_t irida_strings(IridaSession* s, const IridaString** out) {
+    if (!out)
+        return 0;
+    if (!s || !s->vt.strings) {
+        *out = nullptr;
+        return 0;
+    }
+    return s->vt.strings(s->ctx, out);
+}
+
 } // extern "C"

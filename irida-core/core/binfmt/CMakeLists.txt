@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: BUSL-1.1
 include(IridaLief)
 
-add_library(irida_binfmt STATIC src/lief_parser.cpp)
+add_library(irida_binfmt STATIC src/lief_parser.cpp src/strings.cpp)
 target_include_directories(irida_binfmt
   PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}/include
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)

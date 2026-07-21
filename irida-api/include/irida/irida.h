@@ -46,6 +46,32 @@ typedef struct IridaFrame {
     uint64_t frame_ptr;
 } IridaFrame;
 
+typedef struct IridaSection {
+    const char* name;
+    uint64_t vaddr;
+    uint64_t vsize;
+    uint8_t perms;
+} IridaSection;
+typedef struct IridaImport {
+    const char* name;
+    const char* library;
+    uint64_t addr;
+} IridaImport;
+typedef struct IridaExport {
+    const char* name;
+    uint64_t addr;
+    uint32_t ordinal;
+} IridaExport;
+typedef struct IridaSymbol {
+    const char* name;
+    uint64_t addr;
+    const char* kind;
+} IridaSymbol;
+typedef struct IridaString {
+    uint64_t addr;
+    const char* text;
+} IridaString;
+
 typedef enum IridaRunState { IRIDA_STOPPED = 0, IRIDA_RUNNING = 1 } IridaRunState;
 
 typedef enum IridaBpType { IRIDA_BP_SOFTWARE = 0, IRIDA_BP_HARDWARE = 1 } IridaBpType;
@@ -78,6 +104,11 @@ typedef struct IridaBackendVTable {
     void (*bp_toggle)(void* ctx, uint64_t addr);
     void (*bp_set_enabled)(void* ctx, uint64_t addr, int enabled);
     size_t (*backtrace)(void* ctx, const IridaFrame** out);
+    size_t (*sections)(void* ctx, const IridaSection** out);
+    size_t (*imports)(void* ctx, const IridaImport** out);
+    size_t (*get_exports)(void* ctx, const IridaExport** out);
+    size_t (*symbols)(void* ctx, const IridaSymbol** out);
+    size_t (*strings)(void* ctx, const IridaString** out);
 } IridaBackendVTable;
 
 IridaSession* irida_session_create(const IridaBackendVTable* vt, void* ctx);
@@ -112,6 +143,12 @@ size_t irida_breakpoints(IridaSession* s, const IridaBreakpoint** out);
 void irida_bp_toggle(IridaSession* s, uint64_t addr);
 void irida_bp_set_enabled(IridaSession* s, uint64_t addr, int enabled);
 size_t irida_backtrace(IridaSession* s, const IridaFrame** out);
+
+size_t irida_sections(IridaSession* s, const IridaSection** out);
+size_t irida_imports(IridaSession* s, const IridaImport** out);
+size_t irida_exports(IridaSession* s, const IridaExport** out);
+size_t irida_symbols(IridaSession* s, const IridaSymbol** out);
+size_t irida_strings(IridaSession* s, const IridaString** out);
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -267,11 +267,57 @@ size_t mock_backtrace(void*, const IridaFrame** out) {
     return s.frame_view.size();
 }
 
+size_t mock_sections(void*, const IridaSection** out) {
+    static const IridaSection sections[] = {
+        {".text", 0x1000ULL, 0x2000ULL, 0x5}, // r-x
+        {".data", 0x3000ULL, 0x1000ULL, 0x6}, // rw-
+    };
+    *out = sections;
+    return sizeof(sections) / sizeof(sections[0]);
+}
+
+size_t mock_imports(void*, const IridaImport** out) {
+    static const IridaImport imports[] = {
+        {"CreateFileW", "kernel32.dll", 0x00007ff6aa010000ULL},
+        {"NtClose", "ntdll.dll", 0x00007ff6abcd1000ULL},
+    };
+    *out = imports;
+    return sizeof(imports) / sizeof(imports[0]);
+}
+
+size_t mock_exports(void*, const IridaExport** out) {
+    static const IridaExport exports[] = {
+        {"DllMain", 0x00007ff751fa1000ULL, 1},
+        {"ProcessData", 0x00007ff751fa1200ULL, 2},
+    };
+    *out = exports;
+    return sizeof(exports) / sizeof(exports[0]);
+}
+
+size_t mock_symbols(void*, const IridaSymbol** out) {
+    static const IridaSymbol symbols[] = {
+        {"main", 0x00007ff751fa2440ULL, "function"},
+    };
+    *out = symbols;
+    return sizeof(symbols) / sizeof(symbols[0]);
+}
+
+size_t mock_strings(void*, const IridaString** out) {
+    static const IridaString strings[] = {
+        {0x00007ff6abcd0020ULL, "ntdll.dll"},
+        {0x00007ff6abcd0100ULL, "CreateFileW"},
+        {0x00007ff6abcd0200ULL, "Invalid parameter"},
+    };
+    *out = strings;
+    return sizeof(strings) / sizeof(strings[0]);
+}
+
 const IridaBackendVTable kVTable = {
     mock_registers,   mock_modules,     mock_maps,      mock_threads,        mock_disasm,
     mock_run_state,   mock_pc,          mock_epoch,     mock_step_into,      mock_step_over,
     mock_step_out,    mock_cont,        mock_brk,       mock_restart,        mock_stop,
-    mock_read_memory, mock_breakpoints, mock_bp_toggle, mock_bp_set_enabled, mock_backtrace};
+    mock_read_memory, mock_breakpoints, mock_bp_toggle, mock_bp_set_enabled, mock_backtrace,
+    mock_sections,    mock_imports,     mock_exports,   mock_symbols,        mock_strings};
 
 } // namespace
 
