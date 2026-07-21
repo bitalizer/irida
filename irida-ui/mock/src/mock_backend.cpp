@@ -152,11 +152,21 @@ size_t mock_threads(void*, const IridaThread** out) {
     return sizeof(threads) / sizeof(threads[0]);
 }
 
-size_t mock_disasm(void*, uint64_t /*addr*/, size_t count, const IridaInsnRow** out) {
+size_t mock_disasm(void*, uint64_t addr, size_t count, const IridaInsnRow** out) {
     MockState& s = state();
     s.row_view.clear();
-    size_t n = count < kStreamLen ? count : kStreamLen;
-    for (size_t i = 0; i < n; ++i) {
+
+    // Decode from the stream instruction at `addr`. An address not in the
+    // stream yields nothing, so callers that walk block byte-spans terminate
+    // instead of looping on a stale start index.
+    size_t start = kStreamLen;
+    for (size_t i = 0; i < kStreamLen; ++i)
+        if (kStream[i].address == addr) {
+            start = i;
+            break;
+        }
+
+    for (size_t i = start; i < kStreamLen && s.row_view.size() < count; ++i) {
         IridaInsnRow row;
         row.address = kStream[i].address;
         row.text = kStream[i].text;
@@ -164,7 +174,7 @@ size_t mock_disasm(void*, uint64_t /*addr*/, size_t count, const IridaInsnRow** 
         row.bytes = kStream[i].bytes;
         s.row_view.push_back(row);
     }
-    *out = s.row_view.data();
+    *out = s.row_view.empty() ? nullptr : s.row_view.data();
     return s.row_view.size();
 }
 
