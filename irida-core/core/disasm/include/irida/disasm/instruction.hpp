@@ -9,6 +9,15 @@ namespace irida::disasm {
 
 enum class OperandKind { Register, Memory, Immediate, Pointer, Unknown };
 
+// Control-flow class of an instruction. Drives recursive-descent analysis:
+//   Jump      -> unconditional transfer; block ends, follow branch_target
+//   CondJump  -> conditional; block ends with two edges (branch_target + next)
+//   Call      -> subroutine call; branch_target is a new function entry, flow
+//                falls through to the next instruction
+//   Return    -> block ends, path terminates
+//   Sequential-> no transfer; decoding continues into the next instruction
+enum class Flow { Sequential, Jump, CondJump, Call, Return };
+
 struct MemoryOperand { // [base + index*scale + disp]
     std::string base;  // register name, "" if none (e.g. "rax")
     std::string index; // "" if none
@@ -31,6 +40,11 @@ struct Instruction {
     std::string mnemonic; // "mov", "lea", "call", ...
     std::string text;     // full formatted instruction text ("mov rcx, [rax+8]")
     std::vector<Operand> operands;
+    Flow flow = Flow::Sequential;
+    // Resolved absolute branch/call target for direct transfers (Jump/CondJump/
+    // Call with an immediate operand). 0 when the target is indirect (register
+    // or memory) or the instruction does not transfer control.
+    uint64_t branch_target = 0;
 };
 
 } // namespace irida::disasm

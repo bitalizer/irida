@@ -52,6 +52,24 @@ Operand map_operand(const ZydisDecodedOperand& op) {
     return out;
 }
 
+// Map a Zydis instruction to our control-flow class. Uses meta.category, which
+// groups mnemonics regardless of the specific condition (all Jcc share
+// COND_BR, jmp is UNCOND_BR, call/ret/syscall have dedicated categories).
+Flow classify_flow(const ZydisDecodedInstruction& insn) {
+    switch (insn.meta.category) {
+    case ZYDIS_CATEGORY_CALL:
+        return Flow::Call;
+    case ZYDIS_CATEGORY_RET:
+        return Flow::Return;
+    case ZYDIS_CATEGORY_UNCOND_BR:
+        return Flow::Jump;
+    case ZYDIS_CATEGORY_COND_BR:
+        return Flow::CondJump;
+    default:
+        return Flow::Sequential;
+    }
+}
+
 class ZydisDisassembler final : public Disassembler {
   public:
     ZydisDisassembler() {
@@ -84,6 +102,20 @@ class ZydisDisassembler final : public Disassembler {
         out.operands.reserve(insn.operand_count_visible);
         for (ZyanU8 i = 0; i < insn.operand_count_visible; ++i) {
             out.operands.push_back(map_operand(operands[i]));
+        }
+
+        out.flow = classify_flow(insn);
+        if (out.flow == Flow::Jump || out.flow == Flow::CondJump || out.flow == Flow::Call) {
+            for (ZyanU8 i = 0; i < insn.operand_count_visible; ++i) {
+                if (operands[i].type == ZYDIS_OPERAND_TYPE_IMMEDIATE) {
+                    ZyanU64 target = 0;
+                    if (ZYAN_SUCCESS(
+                            ZydisCalcAbsoluteAddress(&insn, &operands[i], address, &target))) {
+                        out.branch_target = target;
+                    }
+                    break;
+                }
+            }
         }
 
         return irida::base::Result<Instruction>::ok(std::move(out));
