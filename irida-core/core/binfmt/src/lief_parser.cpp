@@ -28,16 +28,23 @@ namespace irida::binfmt {
 
 namespace {
 
+// Permission bits, matching the IridaSection/IridaMemMap `perms` contract in
+// the C ABI (irida.h: IRIDA_PERM_READ/WRITE/EXEC). Kept in sync by value; the
+// core does not include the ABI header.
+constexpr uint8_t kPermExec = 0x1;
+constexpr uint8_t kPermWrite = 0x2;
+constexpr uint8_t kPermRead = 0x4;
+
 uint8_t map_perms(const LIEF::PE::Section& section) {
     uint8_t perms = 0;
     if (section.has_characteristic(LIEF::PE::Section::CHARACTERISTICS::MEM_READ)) {
-        perms |= 0b100;
+        perms |= kPermRead;
     }
     if (section.has_characteristic(LIEF::PE::Section::CHARACTERISTICS::MEM_WRITE)) {
-        perms |= 0b010;
+        perms |= kPermWrite;
     }
     if (section.has_characteristic(LIEF::PE::Section::CHARACTERISTICS::MEM_EXECUTE)) {
-        perms |= 0b001;
+        perms |= kPermExec;
     }
     return perms;
 }

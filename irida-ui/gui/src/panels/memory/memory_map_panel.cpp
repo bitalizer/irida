@@ -5,9 +5,9 @@
 namespace {
 QString permsString(uint8_t perms) {
     QString s;
-    s += (perms & 0x1) ? QLatin1Char('r') : QLatin1Char('-');
-    s += (perms & 0x2) ? QLatin1Char('w') : QLatin1Char('-');
-    s += (perms & 0x4) ? QLatin1Char('x') : QLatin1Char('-');
+    s += (perms & IRIDA_PERM_READ) ? QLatin1Char('r') : QLatin1Char('-');
+    s += (perms & IRIDA_PERM_WRITE) ? QLatin1Char('w') : QLatin1Char('-');
+    s += (perms & IRIDA_PERM_EXEC) ? QLatin1Char('x') : QLatin1Char('-');
     return s;
 }
 } // namespace

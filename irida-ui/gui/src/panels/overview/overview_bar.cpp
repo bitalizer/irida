@@ -80,10 +80,10 @@ void OverviewBar::paintEvent(QPaintEvent*) {
         int w = std::max(1, x1 - x0);
 
         QColor color;
-        if (b.perms & 0x4)
-            color = theme::overviewCode(); // executable
-        else if (b.perms & 0x2)
-            color = theme::overviewData(); // writable
+        if (b.perms & IRIDA_PERM_EXEC)
+            color = theme::overviewCode();
+        else if (b.perms & IRIDA_PERM_WRITE)
+            color = theme::overviewData();
         else
             color = theme::overviewReadonly();
         p.fillRect(QRect(x0, 2, w, height() - 4), color);

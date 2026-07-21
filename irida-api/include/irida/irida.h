@@ -13,6 +13,10 @@ extern "C" {
 
 typedef struct IridaSession IridaSession;
 
+/* Section/memory-map permission bits, OR-combined into the `perms` fields of
+ * IridaSection and IridaMemMap. */
+enum { IRIDA_PERM_EXEC = 0x1, IRIDA_PERM_WRITE = 0x2, IRIDA_PERM_READ = 0x4 };
+
 typedef struct IridaRegister {
     const char* name;
     uint64_t value;

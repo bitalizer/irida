@@ -21,9 +21,9 @@ void SectionsPanel::refresh() {
         setCell(r, 1, formatAddress(secs[i].vaddr));
         setCell(r, 2, QString("0x%1").arg(secs[i].vsize, 0, 16).toUpper());
         QString perms;
-        perms += (secs[i].perms & 0x1) ? 'r' : '-';
-        perms += (secs[i].perms & 0x2) ? 'w' : '-';
-        perms += (secs[i].perms & 0x4) ? 'x' : '-';
+        perms += (secs[i].perms & IRIDA_PERM_READ) ? 'r' : '-';
+        perms += (secs[i].perms & IRIDA_PERM_WRITE) ? 'w' : '-';
+        perms += (secs[i].perms & IRIDA_PERM_EXEC) ? 'x' : '-';
         setCell(r, 3, perms);
     }
 }
