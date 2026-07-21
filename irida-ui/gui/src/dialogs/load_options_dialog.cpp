@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 #include "dialogs/load_options_dialog.hpp"
+#include <QAbstractButton>
+#include <QButtonGroup>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDialogButtonBox>
@@ -10,7 +12,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
-#include <QSlider>
+#include <QPushButton>
 #include <QVBoxLayout>
 
 namespace {
@@ -63,24 +65,25 @@ LoadOptionsDialog::LoadOptionsDialog(const QString& programPath, QWidget* parent
     auto* levelLabel = new QLabel("Level: Auto-Analysis", this);
     layout->addWidget(levelLabel);
 
-    levelSlider_ = new QSlider(Qt::Horizontal, this);
-    levelSlider_->setRange(0, 3); // None / Auto / Experimental / Advanced
-    levelSlider_->setValue(1);
-    levelSlider_->setTickPosition(QSlider::TicksBelow);
-    levelSlider_->setTickInterval(1);
-    layout->addWidget(levelSlider_);
-
-    auto* ticks = new QHBoxLayout();
-    for (const char* name : {"None", "Auto", "Experimental", "Advanced"}) {
-        auto* l = new QLabel(name, this);
-        ticks->addWidget(l);
-        ticks->addStretch();
+    // A segmented selector: one level is chosen, with no progress-style fill
+    // implying the levels accumulate.
+    levelGroup_ = new QButtonGroup(this);
+    levelGroup_->setExclusive(true);
+    auto* segments = new QHBoxLayout();
+    segments->setSpacing(0);
+    const char* names[] = {"None", "Auto", "Experimental", "Advanced"};
+    for (int i = 0; i < 4; ++i) {
+        auto* button = new QPushButton(names[i], this);
+        button->setCheckable(true);
+        levelGroup_->addButton(button, i);
+        segments->addWidget(button);
     }
-    layout->addLayout(ticks);
+    levelGroup_->button(1)->setChecked(true); // Auto
+    layout->addLayout(segments);
 
-    connect(levelSlider_, &QSlider::valueChanged, this, [levelLabel](int v) {
-        static const char* names[] = {"None", "Auto-Analysis", "Experimental", "Advanced"};
-        levelLabel->setText(QString("Level: %1").arg(names[v]));
+    connect(levelGroup_, &QButtonGroup::idClicked, this, [levelLabel](int id) {
+        static const char* full[] = {"None", "Auto-Analysis", "Experimental", "Advanced"};
+        levelLabel->setText(QString("Level: %1").arg(full[id]));
     });
 
     // Per-pass toggles (parity placeholders, disabled until implemented).
@@ -92,8 +95,9 @@ LoadOptionsDialog::LoadOptionsDialog(const QString& programPath, QWidget* parent
     }
     passes->setEnabled(false);
     layout->addWidget(passes, 1);
-    connect(analysisEnabled_, &QCheckBox::toggled, this, [this, passes, levelLabel](bool on) {
-        levelSlider_->setEnabled(on);
+    connect(analysisEnabled_, &QCheckBox::toggled, this, [this, levelLabel](bool on) {
+        for (QAbstractButton* b : levelGroup_->buttons())
+            b->setEnabled(on);
         levelLabel->setEnabled(on);
     });
 
@@ -121,6 +125,6 @@ LoadOptionsDialog::LoadOptionsDialog(const QString& programPath, QWidget* parent
 
 void LoadOptionsDialog::onAccept() {
     options_.analyze = analysisEnabled_->isChecked();
-    options_.level = static_cast<AnalysisLevel>(levelSlider_->value());
+    options_.level = static_cast<AnalysisLevel>(levelGroup_->checkedId());
     accept();
 }

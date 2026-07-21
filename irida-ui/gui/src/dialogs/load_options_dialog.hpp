@@ -3,7 +3,7 @@
 #include <QDialog>
 #include <QString>
 class QCheckBox;
-class QSlider;
+class QButtonGroup;
 class QComboBox;
 class QGroupBox;
 
@@ -34,7 +34,7 @@ class LoadOptionsDialog : public QDialog {
 
   private:
     QCheckBox* analysisEnabled_;
-    QSlider* levelSlider_;
+    QButtonGroup* levelGroup_;
     QComboBox* archCombo_;
     QComboBox* bitsCombo_;
     QComboBox* endianCombo_;
