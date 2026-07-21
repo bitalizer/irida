@@ -16,9 +16,11 @@ class MainWindow : public QMainWindow {
     void closeEvent(QCloseEvent* event) override;
 
   private:
+    void buildMenuBar();
     void buildToolbar();
     void buildDocks();
     void restoreLayout();
+    void attachToProcess();
 
     DebugController* controller_;
     CpuWidget* cpu_;

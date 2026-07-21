@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 #include "app/main_window.hpp"
+#include "dialogs/attach_proc_dialog.hpp"
 #include "layouts/cpu_widget.hpp"
 #include "panels/execution/breakpoints_panel.hpp"
 #include "panels/memory/memory_panel.hpp"
@@ -9,6 +10,9 @@
 #include <QAction>
 #include <QCloseEvent>
 #include <QDockWidget>
+#include <QMenu>
+#include <QMenuBar>
+#include <QMessageBox>
 #include <QSettings>
 #include <QToolBar>
 
@@ -18,6 +22,7 @@ MainWindow::MainWindow(IridaSession* session, QWidget* parent) : QMainWindow(par
     cpu_ = new CpuWidget(controller_, this);
     setCentralWidget(cpu_);
 
+    buildMenuBar();
     buildToolbar();
     buildDocks();
 
@@ -29,6 +34,39 @@ MainWindow::MainWindow(IridaSession* session, QWidget* parent) : QMainWindow(par
 
     resize(1200, 800);
     restoreLayout();
+}
+
+void MainWindow::buildMenuBar() {
+    auto* fileMenu = menuBar()->addMenu("&File");
+
+    QAction* attachAction = fileMenu->addAction("&Attach to Process...");
+    connect(attachAction, &QAction::triggered, this, &MainWindow::attachToProcess);
+
+    fileMenu->addSeparator();
+
+    QAction* exitAction = fileMenu->addAction("E&xit");
+    connect(exitAction, &QAction::triggered, this, &QMainWindow::close);
+}
+
+void MainWindow::attachToProcess() {
+    AttachProcDialog dlg(this);
+    if (dlg.exec() != QDialog::Accepted)
+        return;
+
+    uint32_t pid = dlg.selectedPid();
+    if (pid == 0)
+        return;
+
+    IridaSession* newSession = irida_session_create_native(pid);
+    if (!newSession) {
+        QMessageBox::warning(this, "Attach failed",
+                             QString("Failed to attach to process %1. It may be protected or "
+                                     "require elevation.")
+                                 .arg(pid));
+        return;
+    }
+
+    controller_->setSession(newSession, true);
 }
 
 void MainWindow::buildToolbar() {
