@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 #pragma once
 #include "irida/irida.h"
+#include "session/debug_controller.hpp"
 #include <QMainWindow>
 class DebugController;
 class CpuWidget;
@@ -22,7 +23,8 @@ class GraphView;
 class MainWindow : public QMainWindow {
     Q_OBJECT
   public:
-    explicit MainWindow(IridaSession* session, QWidget* parent = nullptr);
+    explicit MainWindow(IridaSession* session, SessionKind kind = SessionKind::Static,
+                        QWidget* parent = nullptr);
 
   protected:
     void closeEvent(QCloseEvent* event) override;

@@ -7,6 +7,7 @@ add_executable(irida_gui WIN32
   src/app/main.cpp
   src/app/main_window.cpp
   src/dialogs/attach_proc_dialog.cpp
+  src/dialogs/welcome_dialog.cpp
   src/theme/icons.cpp
   src/theme/palette.cpp
   src/theme/asm_tokenizer.cpp

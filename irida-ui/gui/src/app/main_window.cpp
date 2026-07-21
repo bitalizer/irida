@@ -31,9 +31,10 @@
 #include <QTimer>
 #include <QToolBar>
 
-MainWindow::MainWindow(IridaSession* session, QWidget* parent) : QMainWindow(parent) {
+MainWindow::MainWindow(IridaSession* session, SessionKind kind, QWidget* parent)
+    : QMainWindow(parent) {
     setWindowTitle("Irida");
-    controller_ = new DebugController(session, this);
+    controller_ = new DebugController(session, this, kind);
     cpu_ = new CpuWidget(controller_, this);
     setCentralWidget(cpu_);
 
@@ -86,7 +87,7 @@ void MainWindow::attachToProcess() {
         return;
     }
 
-    controller_->setSession(newSession, true);
+    controller_->setSession(newSession, SessionKind::Native);
 }
 
 void MainWindow::buildToolbar() {
