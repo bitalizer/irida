@@ -20,12 +20,15 @@
 #include "session/debug_controller.hpp"
 #include "theme/icons.hpp"
 #include <QAction>
+#include <QApplication>
 #include <QCloseEvent>
 #include <QDockWidget>
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QScreen>
 #include <QSettings>
+#include <QTimer>
 #include <QToolBar>
 
 MainWindow::MainWindow(IridaSession* session, QWidget* parent) : QMainWindow(parent) {
@@ -46,6 +49,11 @@ MainWindow::MainWindow(IridaSession* session, QWidget* parent) : QMainWindow(par
 
     resize(1200, 800);
     restoreLayout();
+
+    // Populate the panels after construction returns and the window is shown,
+    // so the first data load runs on the event loop rather than blocking the
+    // window from ever appearing.
+    QTimer::singleShot(0, controller_, &DebugController::refreshViews);
 }
 
 void MainWindow::buildMenuBar() {
@@ -195,7 +203,27 @@ void MainWindow::buildDocks() {
 
 void MainWindow::restoreLayout() {
     QSettings s("Irida", "Irida");
-    restoreGeometry(s.value("geometry").toByteArray());
+    QByteArray geometry = s.value("geometry").toByteArray();
+    if (!geometry.isEmpty())
+        restoreGeometry(geometry);
+
+    // A geometry saved on a monitor that is no longer present (unplugged,
+    // resolution changed) can place the window entirely off every screen,
+    // leaving it invisible. If the restored frame does not intersect any
+    // available screen, drop back to a centered default.
+    bool onScreen = false;
+    for (const QScreen* screen : QApplication::screens()) {
+        if (screen->availableGeometry().intersects(frameGeometry())) {
+            onScreen = true;
+            break;
+        }
+    }
+    if (!onScreen) {
+        resize(1200, 800);
+        if (QScreen* primary = QApplication::primaryScreen())
+            move(primary->availableGeometry().center() - rect().center());
+    }
+
     restoreState(s.value("windowState").toByteArray());
 }
 
