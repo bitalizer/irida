@@ -3,6 +3,8 @@
 #include "dialogs/attach_proc_dialog.hpp"
 #include "layouts/cpu_widget.hpp"
 #include "panels/execution/breakpoints_panel.hpp"
+#include "panels/execution/threads_panel.hpp"
+#include "panels/memory/memory_map_panel.hpp"
 #include "panels/memory/memory_panel.hpp"
 #include "panels/symbols/modules_panel.hpp"
 #include "session/debug_controller.hpp"
@@ -95,6 +97,8 @@ void MainWindow::buildToolbar() {
 void MainWindow::buildDocks() {
     modules_ = new ModulesPanel(controller_, this);
     breakpoints_ = new BreakpointsPanel(controller_, this);
+    threads_ = new ThreadsPanel(controller_, this);
+    memoryMap_ = new MemoryMapPanel(controller_, this);
 
     auto* modDock = new QDockWidget("Modules", this);
     modDock->setObjectName("ModulesDock");
@@ -106,7 +110,19 @@ void MainWindow::buildDocks() {
     bpDock->setWidget(breakpoints_);
     addDockWidget(Qt::RightDockWidgetArea, bpDock);
 
+    auto* threadsDock = new QDockWidget("Threads", this);
+    threadsDock->setObjectName("ThreadsDock");
+    threadsDock->setWidget(threads_);
+    addDockWidget(Qt::RightDockWidgetArea, threadsDock);
+
+    auto* mapDock = new QDockWidget("Memory Map", this);
+    mapDock->setObjectName("MemoryMapDock");
+    mapDock->setWidget(memoryMap_);
+    addDockWidget(Qt::RightDockWidgetArea, mapDock);
+
     tabifyDockWidget(modDock, bpDock);
+    tabifyDockWidget(bpDock, threadsDock);
+    tabifyDockWidget(threadsDock, mapDock);
     modDock->raise();
 }
 

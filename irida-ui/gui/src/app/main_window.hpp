@@ -6,6 +6,8 @@ class DebugController;
 class CpuWidget;
 class ModulesPanel;
 class BreakpointsPanel;
+class ThreadsPanel;
+class MemoryMapPanel;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -26,4 +28,6 @@ class MainWindow : public QMainWindow {
     CpuWidget* cpu_;
     ModulesPanel* modules_;
     BreakpointsPanel* breakpoints_;
+    ThreadsPanel* threads_;
+    MemoryMapPanel* memoryMap_;
 };
