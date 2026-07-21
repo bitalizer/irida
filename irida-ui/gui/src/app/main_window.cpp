@@ -34,7 +34,7 @@
 #include <QTimer>
 #include <QToolBar>
 
-MainWindow::MainWindow(IridaSession* session, SessionKind kind, QWidget* parent)
+MainWindow::MainWindow(IridaSession* session, SessionKind kind, bool autoAnalyze, QWidget* parent)
     : QMainWindow(parent) {
     setWindowTitle("Irida");
     controller_ = new DebugController(session, this, kind);
@@ -62,9 +62,10 @@ MainWindow::MainWindow(IridaSession* session, SessionKind kind, QWidget* parent)
     // Populate the panels after construction returns and the window is shown,
     // so the first data load runs on the event loop rather than blocking the
     // window from ever appearing, then kick off analysis on a worker thread.
-    QTimer::singleShot(0, controller_, [this] {
+    QTimer::singleShot(0, controller_, [this, autoAnalyze] {
         controller_->refreshViews();
-        controller_->runAnalysis();
+        if (autoAnalyze)
+            controller_->runAnalysis();
     });
 }
 

@@ -29,7 +29,7 @@ class MainWindow : public QMainWindow {
     Q_OBJECT
   public:
     explicit MainWindow(IridaSession* session, SessionKind kind = SessionKind::Static,
-                        QWidget* parent = nullptr);
+                        bool autoAnalyze = true, QWidget* parent = nullptr);
 
   protected:
     void closeEvent(QCloseEvent* event) override;
