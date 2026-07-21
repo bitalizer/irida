@@ -11,7 +11,7 @@ add_executable(test_symres test_symres.cpp)
 target_include_directories(test_symres PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include
                                                ${CMAKE_CURRENT_SOURCE_DIR}/../src)
 target_link_libraries(test_symres PRIVATE irida_capi irida_base irida_target irida_disasm
-                                          irida_backend irida_binfmt)
+                                          irida_analysis irida_backend irida_binfmt)
 if(WIN32)
   target_link_libraries(test_symres PRIVATE irida_host)
 endif()

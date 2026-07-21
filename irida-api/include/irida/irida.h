@@ -72,6 +72,29 @@ typedef struct IridaString {
     const char* text;
 } IridaString;
 
+typedef struct IridaFunction {
+    uint64_t addr;
+    uint64_t size;
+    const char* name;   /* "fcn.<hex>" unless a symbol supplies a real name */
+    size_t block_count; /* basic blocks in this function's CFG */
+} IridaFunction;
+typedef struct IridaBasicBlock {
+    uint64_t addr;
+    uint64_t size;
+    uint64_t jump; /* taken-branch successor, or 0 */
+    uint64_t fail; /* fall-through successor, or 0 */
+} IridaBasicBlock;
+typedef enum IridaXrefKind {
+    IRIDA_XREF_CALL = 0,
+    IRIDA_XREF_JUMP = 1,
+    IRIDA_XREF_DATA = 2
+} IridaXrefKind;
+typedef struct IridaXref {
+    uint64_t from;
+    uint64_t to;
+    int kind; /* IridaXrefKind */
+} IridaXref;
+
 typedef enum IridaRunState { IRIDA_STOPPED = 0, IRIDA_RUNNING = 1 } IridaRunState;
 
 typedef enum IridaBpType { IRIDA_BP_SOFTWARE = 0, IRIDA_BP_HARDWARE = 1 } IridaBpType;
@@ -109,6 +132,10 @@ typedef struct IridaBackendVTable {
     size_t (*get_exports)(void* ctx, const IridaExport** out);
     size_t (*symbols)(void* ctx, const IridaSymbol** out);
     size_t (*strings)(void* ctx, const IridaString** out);
+    void (*analyze)(void* ctx);
+    size_t (*functions)(void* ctx, const IridaFunction** out);
+    size_t (*function_blocks)(void* ctx, uint64_t fn_addr, const IridaBasicBlock** out);
+    size_t (*xrefs_to)(void* ctx, uint64_t addr, const IridaXref** out);
 } IridaBackendVTable;
 
 IridaSession* irida_session_create(const IridaBackendVTable* vt, void* ctx);
@@ -149,6 +176,19 @@ size_t irida_imports(IridaSession* s, const IridaImport** out);
 size_t irida_exports(IridaSession* s, const IridaExport** out);
 size_t irida_symbols(IridaSession* s, const IridaSymbol** out);
 size_t irida_strings(IridaSession* s, const IridaString** out);
+
+/* Runs recursive-descent analysis (function discovery + CFG + xrefs) over the
+ * main module, seeded from the entry point and known symbols. Idempotent; the
+ * result is cached until the next call. Cheap to call again. */
+void irida_analyze(IridaSession* s);
+/* The functions discovered by the most recent irida_analyze(). Empty until
+ * analysis has run. Borrowed array, valid until the next analysis call. */
+size_t irida_functions(IridaSession* s, const IridaFunction** out);
+/* The basic blocks (CFG nodes) of the function at fn_addr, sorted by address.
+ * Empty if fn_addr is not a discovered function. */
+size_t irida_function_blocks(IridaSession* s, uint64_t fn_addr, const IridaBasicBlock** out);
+/* All references that target `addr` (calls and jumps to it). */
+size_t irida_xrefs_to(IridaSession* s, uint64_t addr, const IridaXref** out);
 
 #ifdef __cplusplus
 } /* extern "C" */

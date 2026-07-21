@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 #include "backend.hpp"
+#include "irida/analysis/analysis.hpp"
 #include "irida/backend/native_backend.hpp"
 #include "irida/backend/types.hpp"
 #include "irida/binfmt/binary.hpp"
@@ -19,6 +20,8 @@
 
 namespace {
 
+using irida::analysis::AnalysisResult;
+using irida::analysis::Analyzer;
 using irida::backend::AttachMethod;
 using irida::backend::AttachSpec;
 using irida::backend::make_native_backend;
@@ -151,6 +154,14 @@ struct IridaCoreCtx {
     std::vector<IridaString> string_rows;
     std::vector<std::string> string_texts;
 
+    // Analysis: the discovered functions/CFG/xrefs, cached after irida_analyze.
+    AnalysisResult analysis;
+
+    std::vector<IridaFunction> function_rows;
+    std::vector<std::string> function_names;
+    std::vector<IridaBasicBlock> block_rows;
+    std::vector<IridaXref> xref_rows;
+
     explicit IridaCoreCtx(Target t) : target(std::move(t)), disasm(make_x86_64_disassembler()) {}
 
     // Lazily parses the main module (first module reported by the target)
@@ -194,6 +205,35 @@ struct IridaCoreCtx {
         if (it == symbol_map.end())
             return std::nullopt;
         return it->second;
+    }
+
+    // Runs recursive-descent analysis over the main module. Seeds entry points
+    // from the current program counter and every exported/symbol runtime
+    // address, so the reachable call graph is discovered from all known roots.
+    // The reader serves bytes straight from live target memory. Cached; a
+    // second call rebuilds (cheap re-run, keeps the view honest after code
+    // changes).
+    void run_analysis() {
+        std::vector<uint64_t> entries;
+        entries.push_back(target.registers().get("rip").value_or(0));
+        if (ensure_binary_parsed()) {
+            for (const auto& [addr, name] : symbol_map)
+                entries.push_back(addr);
+        }
+
+        Analyzer analyzer(*disasm, [this](uint64_t addr, std::span<std::byte> buf) -> size_t {
+            auto bytes = target.read_memory(addr, buf.size());
+            if (!bytes.has_value())
+                return 0;
+            const auto& v = bytes.value();
+            size_t n = v.size() < buf.size() ? v.size() : buf.size();
+            std::memcpy(buf.data(), v.data(), n);
+            return n;
+        });
+        analyzer.set_symbol_names(
+            [this](uint64_t addr) -> std::optional<std::string> { return resolve_symbol(addr); });
+
+        analysis = analyzer.analyze(entries);
     }
 };
 
@@ -564,12 +604,92 @@ size_t core_strings(void* ctx, const IridaString** out) {
     return c->string_rows.size();
 }
 
-const IridaBackendVTable kCoreVTable = {
-    core_registers,   core_modules,     core_maps,        core_threads,        core_disasm,
-    core_run_state,   core_pc,          core_state_epoch, core_step_into,      core_step_over,
-    core_step_out,    core_cont,        core_brk,         core_restart,        core_stop,
-    core_read_memory, core_breakpoints, core_bp_toggle,   core_bp_set_enabled, core_backtrace,
-    core_sections,    core_imports,     core_exports,     core_symbols,        core_strings};
+void core_analyze(void* ctx) {
+    ctx_of(ctx)->run_analysis();
+}
+
+size_t core_functions(void* ctx, const IridaFunction** out) {
+    IridaCoreCtx* c = ctx_of(ctx);
+    c->function_rows.clear();
+    c->function_names.clear();
+    *out = nullptr;
+
+    const auto& fns = c->analysis.functions;
+    c->function_names.reserve(fns.size());
+    for (const auto& fn : fns)
+        c->function_names.push_back(fn.name);
+
+    c->function_rows.reserve(fns.size());
+    for (size_t i = 0; i < fns.size(); ++i)
+        c->function_rows.push_back(IridaFunction{
+            fns[i].addr, fns[i].size, c->function_names[i].c_str(), fns[i].blocks.size()});
+
+    *out = c->function_rows.empty() ? nullptr : c->function_rows.data();
+    return c->function_rows.size();
+}
+
+size_t core_function_blocks(void* ctx, uint64_t fn_addr, const IridaBasicBlock** out) {
+    IridaCoreCtx* c = ctx_of(ctx);
+    c->block_rows.clear();
+    *out = nullptr;
+
+    for (const auto& fn : c->analysis.functions) {
+        if (fn.addr != fn_addr)
+            continue;
+        c->block_rows.reserve(fn.blocks.size());
+        for (const auto& bb : fn.blocks)
+            c->block_rows.push_back(IridaBasicBlock{bb.addr, bb.size, bb.jump, bb.fail});
+        break;
+    }
+
+    *out = c->block_rows.empty() ? nullptr : c->block_rows.data();
+    return c->block_rows.size();
+}
+
+size_t core_xrefs_to(void* ctx, uint64_t addr, const IridaXref** out) {
+    IridaCoreCtx* c = ctx_of(ctx);
+    c->xref_rows.clear();
+    *out = nullptr;
+
+    for (const auto& x : c->analysis.xrefs) {
+        if (x.to != addr)
+            continue;
+        c->xref_rows.push_back(IridaXref{x.from, x.to, static_cast<int>(x.kind)});
+    }
+
+    *out = c->xref_rows.empty() ? nullptr : c->xref_rows.data();
+    return c->xref_rows.size();
+}
+
+const IridaBackendVTable kCoreVTable = {core_registers,
+                                        core_modules,
+                                        core_maps,
+                                        core_threads,
+                                        core_disasm,
+                                        core_run_state,
+                                        core_pc,
+                                        core_state_epoch,
+                                        core_step_into,
+                                        core_step_over,
+                                        core_step_out,
+                                        core_cont,
+                                        core_brk,
+                                        core_restart,
+                                        core_stop,
+                                        core_read_memory,
+                                        core_breakpoints,
+                                        core_bp_toggle,
+                                        core_bp_set_enabled,
+                                        core_backtrace,
+                                        core_sections,
+                                        core_imports,
+                                        core_exports,
+                                        core_symbols,
+                                        core_strings,
+                                        core_analyze,
+                                        core_functions,
+                                        core_function_blocks,
+                                        core_xrefs_to};
 
 } // namespace
 

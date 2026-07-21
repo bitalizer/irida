@@ -205,4 +205,39 @@ size_t irida_strings(IridaSession* s, const IridaString** out) {
     return s->vt.strings(s->ctx, out);
 }
 
+void irida_analyze(IridaSession* s) {
+    if (s && s->vt.analyze)
+        s->vt.analyze(s->ctx);
+}
+
+size_t irida_functions(IridaSession* s, const IridaFunction** out) {
+    if (!out)
+        return 0;
+    if (!s || !s->vt.functions) {
+        *out = nullptr;
+        return 0;
+    }
+    return s->vt.functions(s->ctx, out);
+}
+
+size_t irida_function_blocks(IridaSession* s, uint64_t fn_addr, const IridaBasicBlock** out) {
+    if (!out)
+        return 0;
+    if (!s || !s->vt.function_blocks) {
+        *out = nullptr;
+        return 0;
+    }
+    return s->vt.function_blocks(s->ctx, fn_addr, out);
+}
+
+size_t irida_xrefs_to(IridaSession* s, uint64_t addr, const IridaXref** out) {
+    if (!out)
+        return 0;
+    if (!s || !s->vt.xrefs_to) {
+        *out = nullptr;
+        return 0;
+    }
+    return s->vt.xrefs_to(s->ctx, addr, out);
+}
+
 } // extern "C"
