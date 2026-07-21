@@ -160,7 +160,8 @@ struct IridaStaticCtx {
         for (const auto& imp : bin.imports)
             symbol_map[imp.iat_addr] = "sym.imp." + imp.name;
 
-        analyze();
+        // Analysis is deferred to irida_analyze() so session creation stays
+        // cheap; the frontend runs it on a worker thread.
         return true;
     }
 

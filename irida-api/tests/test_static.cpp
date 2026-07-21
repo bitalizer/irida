@@ -38,7 +38,9 @@ int main() {
     assert(ninsn > 0);
     assert(rows[0].address == code_addr);
 
-    // Analysis runs on open; the entry point yields at least one function.
+    // Analysis is explicit (kept off session creation so opening is cheap).
+    // After it runs, the entry point yields at least one function.
+    irida_analyze(s);
     const IridaFunction* fns = nullptr;
     size_t nfn = irida_functions(s, &fns);
     assert(nfn > 0);
