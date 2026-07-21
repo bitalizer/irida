@@ -8,11 +8,17 @@
 int main(int argc, char** argv) {
     QApplication app(argc, argv);
 
-    WelcomeDialog welcome;
-    if (welcome.exec() != QDialog::Accepted)
-        return 0; // no target chosen
-
-    QString path = welcome.selectedPath();
+    // A path on the command line opens that binary directly (file association,
+    // terminal use); otherwise the welcome window chooses the target.
+    QString path;
+    if (argc > 1) {
+        path = QString::fromLocal8Bit(argv[1]);
+    } else {
+        WelcomeDialog welcome;
+        if (welcome.exec() != QDialog::Accepted)
+            return 0; // no target chosen
+        path = welcome.selectedPath();
+    }
     IridaSession* session = irida_session_create_file(path.toLocal8Bit().constData());
     if (!session) {
         QMessageBox::critical(nullptr, "Open failed", "Could not open or parse:\n" + path);
