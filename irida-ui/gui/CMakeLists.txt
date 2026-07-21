@@ -27,6 +27,7 @@ add_executable(irida_gui
   src/panels/binfmt/symbols_panel.cpp
   src/panels/binfmt/strings_panel.cpp
   src/panels/analysis/functions_panel.cpp
+  src/panels/analysis/xrefs_panel.cpp
   src/panels/execution/breakpoints_panel.cpp
   src/panels/execution/threads_panel.cpp
   src/panels/console/console_panel.cpp
