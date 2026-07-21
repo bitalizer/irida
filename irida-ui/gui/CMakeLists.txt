@@ -24,6 +24,7 @@ add_executable(irida_gui
   src/panels/execution/breakpoints_panel.cpp
   src/panels/execution/threads_panel.cpp
   src/panels/console/console_panel.cpp
+  src/panels/execution/backtrace_panel.cpp
   resources/icons.qrc)
 target_include_directories(irida_gui PRIVATE src)
 target_link_libraries(irida_gui PRIVATE irida_capi irida_mock Qt6::Widgets Qt6::Svg)
