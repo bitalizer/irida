@@ -2,6 +2,8 @@
 #include "app/main_window.hpp"
 #include "dialogs/attach_proc_dialog.hpp"
 #include "layouts/cpu_widget.hpp"
+#include "panels/console/console_panel.hpp"
+#include "panels/execution/backtrace_panel.hpp"
 #include "panels/execution/breakpoints_panel.hpp"
 #include "panels/execution/threads_panel.hpp"
 #include "panels/memory/memory_map_panel.hpp"
@@ -99,6 +101,8 @@ void MainWindow::buildDocks() {
     breakpoints_ = new BreakpointsPanel(controller_, this);
     threads_ = new ThreadsPanel(controller_, this);
     memoryMap_ = new MemoryMapPanel(controller_, this);
+    backtrace_ = new BacktracePanel(controller_, this);
+    console_ = new ConsolePanel(controller_, this);
 
     auto* modDock = new QDockWidget("Modules", this);
     modDock->setObjectName("ModulesDock");
@@ -120,9 +124,20 @@ void MainWindow::buildDocks() {
     mapDock->setWidget(memoryMap_);
     addDockWidget(Qt::RightDockWidgetArea, mapDock);
 
+    auto* btDock = new QDockWidget("Backtrace", this);
+    btDock->setObjectName("BacktraceDock");
+    btDock->setWidget(backtrace_);
+    addDockWidget(Qt::RightDockWidgetArea, btDock);
+
+    auto* consoleDock = new QDockWidget("Console", this);
+    consoleDock->setObjectName("ConsoleDock");
+    consoleDock->setWidget(console_);
+    addDockWidget(Qt::BottomDockWidgetArea, consoleDock);
+
     tabifyDockWidget(modDock, bpDock);
     tabifyDockWidget(bpDock, threadsDock);
     tabifyDockWidget(threadsDock, mapDock);
+    tabifyDockWidget(mapDock, btDock);
     modDock->raise();
 }
 

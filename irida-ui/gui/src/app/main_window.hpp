@@ -8,6 +8,8 @@ class ModulesPanel;
 class BreakpointsPanel;
 class ThreadsPanel;
 class MemoryMapPanel;
+class BacktracePanel;
+class ConsolePanel;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -30,4 +32,6 @@ class MainWindow : public QMainWindow {
     BreakpointsPanel* breakpoints_;
     ThreadsPanel* threads_;
     MemoryMapPanel* memoryMap_;
+    BacktracePanel* backtrace_;
+    ConsolePanel* console_;
 };
