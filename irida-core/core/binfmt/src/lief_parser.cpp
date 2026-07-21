@@ -117,6 +117,20 @@ class LiefParser final : public BinaryParser {
             collect_exports(*binary, info.exports);
             collect_symbols(*binary, info.symbols);
 
+            // LIEF reports section/import/export/symbol addresses as RVAs but
+            // the entry point as an absolute VA. Rebase the RVAs by the image
+            // base so every address in BinaryInfo lives in one space (absolute
+            // VA), matching the entry point and how a loaded module is seen.
+            const uint64_t base = info.image_base;
+            for (auto& sec : info.sections)
+                sec.vaddr += base;
+            for (auto& imp : info.imports)
+                imp.iat_addr += base;
+            for (auto& exp : info.exports)
+                exp.addr += base;
+            for (auto& sym : info.symbols)
+                sym.addr += base;
+
             return irida::base::Result<BinaryInfo>::ok(std::move(info));
         } catch (const std::exception& e) {
             return irida::base::Result<BinaryInfo>::err(std::string("LIEF exception: ") + e.what());

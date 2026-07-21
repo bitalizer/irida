@@ -38,6 +38,14 @@ int main() {
     assert(ninsn > 0);
     assert(rows[0].address == code_addr);
 
+    // The entry point must disassemble — section vaddrs and the entry point
+    // must share one address space, or read_at finds no section (empty view).
+    uint64_t entry = irida_pc(s);
+    const IridaInsnRow* entry_rows = nullptr;
+    size_t nentry = irida_disasm(s, entry, 4, &entry_rows);
+    assert(nentry > 0);
+    assert(entry_rows[0].address == entry);
+
     // Analysis is explicit (kept off session creation so opening is cheap).
     // After it runs, the entry point yields at least one function.
     irida_analyze(s);
