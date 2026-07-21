@@ -12,9 +12,14 @@ class DebugController : public QObject {
     Q_OBJECT
   public:
     explicit DebugController(IridaSession* session, QObject* parent = nullptr);
+    ~DebugController() override;
     IridaSession* session() const {
         return session_;
     }
+
+    // Replaces the active session, destroying the previous one with the
+    // destructor matching how it was created (native vs mock).
+    void setSession(IridaSession* s, bool is_native);
 
   public slots:
     void stepInto();
@@ -34,5 +39,7 @@ class DebugController : public QObject {
 
   private:
     void afterOp(uint64_t epoch_before);
+    void destroySession();
     IridaSession* session_;
+    bool session_is_native_ = false;
 };

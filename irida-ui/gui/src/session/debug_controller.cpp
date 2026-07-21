@@ -2,7 +2,28 @@
 #include "session/debug_controller.hpp"
 
 DebugController::DebugController(IridaSession* session, QObject* parent)
-    : QObject(parent), session_(session) {}
+    : QObject(parent), session_(session), session_is_native_(false) {}
+
+DebugController::~DebugController() {
+    destroySession();
+}
+
+void DebugController::destroySession() {
+    if (!session_)
+        return;
+    if (session_is_native_)
+        irida_session_destroy_native(session_);
+    else
+        irida_session_destroy(session_);
+    session_ = nullptr;
+}
+
+void DebugController::setSession(IridaSession* s, bool is_native) {
+    destroySession();
+    session_ = s;
+    session_is_native_ = is_native;
+    emit stateChanged();
+}
 
 void DebugController::afterOp(uint64_t epoch_before) {
     if (irida_state_epoch(session_) != epoch_before)

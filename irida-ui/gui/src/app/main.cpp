@@ -9,6 +9,5 @@ int main(int argc, char** argv) {
     MainWindow w(session);
     w.show();
     int rc = app.exec();
-    irida_session_destroy(session);
     return rc;
 }
