@@ -149,6 +149,15 @@ void irida_session_destroy(IridaSession* s);
 IridaSession* irida_session_create_native(uint32_t pid);
 void irida_session_destroy_native(IridaSession* s);
 
+/* Opens a binary file for static analysis (no live process): the file is
+ * parsed and its sections/imports/exports/symbols/strings, disassembly, and
+ * function/CFG analysis are served straight from the file image. Live-only
+ * operations (registers, threads, stepping) report empty. Returns NULL if the
+ * file cannot be read or parsed. Sessions created this way own core state and
+ * MUST be destroyed with irida_session_destroy_static(). */
+IridaSession* irida_session_create_file(const char* path);
+void irida_session_destroy_static(IridaSession* s);
+
 size_t irida_registers(IridaSession* s, const IridaRegister** out);
 size_t irida_modules(IridaSession* s, const IridaModule** out);
 size_t irida_maps(IridaSession* s, const IridaMemMap** out);

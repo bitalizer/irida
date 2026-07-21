@@ -17,3 +17,8 @@ if(WIN32)
 endif()
 irida_set_warnings(test_symres)
 add_test(NAME capi.symres COMMAND test_symres)
+
+add_executable(test_static test_static.cpp)
+target_link_libraries(test_static PRIVATE irida_capi)
+irida_set_warnings(test_static)
+add_test(NAME capi.static COMMAND test_static)
