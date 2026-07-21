@@ -7,7 +7,6 @@
 RegistersPanel::RegistersPanel(DebugController* controller, QWidget* parent)
     : IridaTableView({"Register", "Value", "Hint"}, parent), controller_(controller) {
     connect(controller_, &DebugController::stateChanged, this, &RegistersPanel::refresh);
-    refresh();
 }
 
 void RegistersPanel::refresh() {

@@ -6,7 +6,6 @@ FunctionsPanel::FunctionsPanel(DebugController* controller, QWidget* parent)
     : IridaTableView({"Name", "Address", "Size", "Blocks"}, parent), controller_(controller) {
     connect(controller_, &DebugController::stateChanged, this, &FunctionsPanel::refresh);
     connect(this, &QTableWidget::cellDoubleClicked, this, &FunctionsPanel::onDoubleClicked);
-    refresh();
 }
 
 void FunctionsPanel::refresh() {

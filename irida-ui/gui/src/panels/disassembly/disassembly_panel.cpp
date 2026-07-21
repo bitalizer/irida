@@ -11,7 +11,6 @@ DisassemblyPanel::DisassemblyPanel(DebugController* controller, QWidget* parent)
     connect(controller_, &DebugController::stateChanged, this, &DisassemblyPanel::refresh);
     connect(controller_, &DebugController::navigationRequested, this, &DisassemblyPanel::setBase);
     connect(this, &QTableWidget::cellClicked, this, &DisassemblyPanel::onCellClicked);
-    refresh();
 }
 
 void DisassemblyPanel::setBase(uint64_t addr) {

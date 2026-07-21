@@ -6,7 +6,6 @@ SymbolsPanel::SymbolsPanel(DebugController* controller, QWidget* parent)
     : IridaTableView({"Name", "Address", "Kind"}, parent), controller_(controller) {
     connect(controller_, &DebugController::stateChanged, this, &SymbolsPanel::refresh);
     connect(this, &QTableWidget::cellDoubleClicked, this, &SymbolsPanel::onDoubleClicked);
-    refresh();
 }
 
 void SymbolsPanel::refresh() {

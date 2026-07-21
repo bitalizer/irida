@@ -7,7 +7,6 @@ XrefsPanel::XrefsPanel(DebugController* controller, QWidget* parent)
     connect(controller_, &DebugController::stateChanged, this, &XrefsPanel::refresh);
     connect(controller_, &DebugController::navigationRequested, this, &XrefsPanel::setTarget);
     connect(this, &QTableWidget::cellDoubleClicked, this, &XrefsPanel::onDoubleClicked);
-    refresh();
 }
 
 void XrefsPanel::setTarget(uint64_t addr) {

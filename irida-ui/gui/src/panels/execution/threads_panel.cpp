@@ -9,7 +9,6 @@ ThreadsPanel::ThreadsPanel(DebugController* controller, QWidget* parent)
     : IridaTableView({"TID", "PC", "Current"}, parent), controller_(controller) {
     connect(controller_, &DebugController::stateChanged, this, &ThreadsPanel::refresh);
     connect(this, &QTableWidget::cellDoubleClicked, this, &ThreadsPanel::onDoubleClicked);
-    refresh();
 }
 
 void ThreadsPanel::refresh() {

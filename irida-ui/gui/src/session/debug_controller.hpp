@@ -22,6 +22,9 @@ class DebugController : public QObject {
     void setSession(IridaSession* s, bool is_native);
 
   public slots:
+    // Signals every connected view to reload from the current session. Used to
+    // populate panels once after the window is shown, off the construction path.
+    void refreshViews();
     void stepInto();
     void stepOver();
     void stepOut();

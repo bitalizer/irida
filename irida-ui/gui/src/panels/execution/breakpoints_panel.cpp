@@ -6,7 +6,6 @@ BreakpointsPanel::BreakpointsPanel(DebugController* controller, QWidget* parent)
     : IridaTableView({"Enabled", "Address", "Type"}, parent), controller_(controller) {
     connect(controller_, &DebugController::stateChanged, this, &BreakpointsPanel::refresh);
     connect(this, &QTableWidget::cellDoubleClicked, this, &BreakpointsPanel::onDoubleClicked);
-    refresh();
 }
 
 void BreakpointsPanel::refresh() {

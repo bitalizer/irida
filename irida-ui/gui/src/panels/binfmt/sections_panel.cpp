@@ -6,7 +6,6 @@ SectionsPanel::SectionsPanel(DebugController* controller, QWidget* parent)
     : IridaTableView({"Name", "Address", "Size", "Perms"}, parent), controller_(controller) {
     connect(controller_, &DebugController::stateChanged, this, &SectionsPanel::refresh);
     connect(this, &QTableWidget::cellDoubleClicked, this, &SectionsPanel::onDoubleClicked);
-    refresh();
 }
 
 void SectionsPanel::refresh() {

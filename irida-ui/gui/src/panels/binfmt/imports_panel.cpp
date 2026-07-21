@@ -6,7 +6,6 @@ ImportsPanel::ImportsPanel(DebugController* controller, QWidget* parent)
     : IridaTableView({"Name", "Library", "Address"}, parent), controller_(controller) {
     connect(controller_, &DebugController::stateChanged, this, &ImportsPanel::refresh);
     connect(this, &QTableWidget::cellDoubleClicked, this, &ImportsPanel::onDoubleClicked);
-    refresh();
 }
 
 void ImportsPanel::refresh() {

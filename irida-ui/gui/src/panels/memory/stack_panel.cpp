@@ -13,7 +13,6 @@ constexpr int kSlots = 12;
 StackPanel::StackPanel(DebugController* controller, QWidget* parent)
     : IridaTableView({"Address", "Value", "Hint"}, parent), controller_(controller) {
     connect(controller_, &DebugController::stateChanged, this, &StackPanel::refresh);
-    refresh();
 }
 
 void StackPanel::refresh() {

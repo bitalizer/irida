@@ -6,7 +6,6 @@ ModulesPanel::ModulesPanel(DebugController* controller, QWidget* parent)
     : IridaTableView({"Name", "Base", "Size"}, parent), controller_(controller) {
     connect(controller_, &DebugController::stateChanged, this, &ModulesPanel::refresh);
     connect(this, &QTableWidget::cellDoubleClicked, this, &ModulesPanel::onDoubleClicked);
-    refresh();
 }
 
 void ModulesPanel::refresh() {

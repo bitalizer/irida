@@ -6,7 +6,6 @@ ExportsPanel::ExportsPanel(DebugController* controller, QWidget* parent)
     : IridaTableView({"Name", "Address", "Ordinal"}, parent), controller_(controller) {
     connect(controller_, &DebugController::stateChanged, this, &ExportsPanel::refresh);
     connect(this, &QTableWidget::cellDoubleClicked, this, &ExportsPanel::onDoubleClicked);
-    refresh();
 }
 
 void ExportsPanel::refresh() {

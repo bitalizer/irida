@@ -16,7 +16,6 @@ MemoryMapPanel::MemoryMapPanel(DebugController* controller, QWidget* parent)
     : IridaTableView({"Start", "End", "Size", "Perms", "Name"}, parent), controller_(controller) {
     connect(controller_, &DebugController::stateChanged, this, &MemoryMapPanel::refresh);
     connect(this, &QTableWidget::cellDoubleClicked, this, &MemoryMapPanel::onDoubleClicked);
-    refresh();
 }
 
 void MemoryMapPanel::refresh() {

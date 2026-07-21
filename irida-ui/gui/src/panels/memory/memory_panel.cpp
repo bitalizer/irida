@@ -12,7 +12,6 @@ constexpr size_t kWindow = static_cast<size_t>(kBytesPerRow) * kRows;
 MemoryPanel::MemoryPanel(DebugController* controller, QWidget* parent)
     : IridaTableView({"Address", "Hex", "ASCII"}, parent), controller_(controller) {
     connect(controller_, &DebugController::stateChanged, this, &MemoryPanel::refresh);
-    refresh();
 }
 
 void MemoryPanel::setBase(uint64_t addr) {

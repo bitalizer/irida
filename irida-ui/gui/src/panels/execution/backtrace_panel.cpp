@@ -6,7 +6,6 @@ BacktracePanel::BacktracePanel(DebugController* controller, QWidget* parent)
     : IridaTableView({"#", "PC", "Frame"}, parent), controller_(controller) {
     connect(controller_, &DebugController::stateChanged, this, &BacktracePanel::refresh);
     connect(this, &QTableWidget::cellDoubleClicked, this, &BacktracePanel::onDoubleClicked);
-    refresh();
 }
 
 void BacktracePanel::refresh() {

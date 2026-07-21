@@ -6,7 +6,6 @@ StringsPanel::StringsPanel(DebugController* controller, QWidget* parent)
     : IridaTableView({"Address", "String"}, parent), controller_(controller) {
     connect(controller_, &DebugController::stateChanged, this, &StringsPanel::refresh);
     connect(this, &QTableWidget::cellDoubleClicked, this, &StringsPanel::onDoubleClicked);
-    refresh();
 }
 
 void StringsPanel::refresh() {

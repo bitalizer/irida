@@ -25,6 +25,10 @@ void DebugController::setSession(IridaSession* s, bool is_native) {
     emit stateChanged();
 }
 
+void DebugController::refreshViews() {
+    emit stateChanged();
+}
+
 void DebugController::afterOp(uint64_t epoch_before) {
     if (irida_state_epoch(session_) != epoch_before)
         emit stateChanged();
