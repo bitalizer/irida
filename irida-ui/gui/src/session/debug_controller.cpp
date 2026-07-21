@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 #include "session/debug_controller.hpp"
 
-DebugController::DebugController(IridaSession* session, QObject* parent)
-    : QObject(parent), session_(session), session_is_native_(false) {}
+DebugController::DebugController(IridaSession* session, QObject* parent, SessionKind kind)
+    : QObject(parent), session_(session), session_kind_(kind) {}
 
 DebugController::~DebugController() {
     destroySession();
@@ -11,17 +11,24 @@ DebugController::~DebugController() {
 void DebugController::destroySession() {
     if (!session_)
         return;
-    if (session_is_native_)
+    switch (session_kind_) {
+    case SessionKind::Native:
         irida_session_destroy_native(session_);
-    else
+        break;
+    case SessionKind::Static:
+        irida_session_destroy_static(session_);
+        break;
+    case SessionKind::Mock:
         irida_session_destroy(session_);
+        break;
+    }
     session_ = nullptr;
 }
 
-void DebugController::setSession(IridaSession* s, bool is_native) {
+void DebugController::setSession(IridaSession* s, SessionKind kind) {
     destroySession();
     session_ = s;
-    session_is_native_ = is_native;
+    session_kind_ = kind;
     emit stateChanged();
 }
 

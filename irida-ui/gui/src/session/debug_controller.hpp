@@ -8,18 +8,22 @@
 // directly; they invoke these slots and listen to stateChanged(). When the real
 // engine replaces the mock, only this class changes (worker thread + queued
 // stateChanged()) — panels are untouched.
+// How a session was created, so it is destroyed with the matching ABI call.
+enum class SessionKind { Mock, Static, Native };
+
 class DebugController : public QObject {
     Q_OBJECT
   public:
-    explicit DebugController(IridaSession* session, QObject* parent = nullptr);
+    explicit DebugController(IridaSession* session, QObject* parent = nullptr,
+                             SessionKind kind = SessionKind::Mock);
     ~DebugController() override;
     IridaSession* session() const {
         return session_;
     }
 
     // Replaces the active session, destroying the previous one with the
-    // destructor matching how it was created (native vs mock).
-    void setSession(IridaSession* s, bool is_native);
+    // destructor matching how it was created.
+    void setSession(IridaSession* s, SessionKind kind);
 
   public slots:
     // Signals every connected view to reload from the current session. Used to
@@ -44,5 +48,5 @@ class DebugController : public QObject {
     void afterOp(uint64_t epoch_before);
     void destroySession();
     IridaSession* session_;
-    bool session_is_native_ = false;
+    SessionKind session_kind_ = SessionKind::Mock;
 };
