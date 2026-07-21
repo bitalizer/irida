@@ -11,6 +11,9 @@ DisassemblyPanel::DisassemblyPanel(DebugController* controller, QWidget* parent)
     connect(controller_, &DebugController::stateChanged, this, &DisassemblyPanel::refresh);
     connect(controller_, &DebugController::navigationRequested, this, &DisassemblyPanel::setBase);
     connect(this, &QTableWidget::cellClicked, this, &DisassemblyPanel::onCellClicked);
+    // The Live-value column is only meaningful with a live process; hide it for
+    // static file analysis.
+    setDataColumnHidden(3, !controller_->isLive());
 }
 
 void DisassemblyPanel::setBase(uint64_t addr) {
@@ -20,6 +23,7 @@ void DisassemblyPanel::setBase(uint64_t addr) {
 
 void DisassemblyPanel::refresh() {
     IridaSession* s = controller_->session();
+    setDataColumnHidden(3, !controller_->isLive());
     const IridaInsnRow* rows = nullptr;
     uint64_t at = base_ ? base_ : irida_pc(s);
     size_t n = irida_disasm(s, at, 256, &rows);

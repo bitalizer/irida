@@ -63,6 +63,11 @@ class IridaTableView : public QTableWidget {
         return 1;
     }
 
+    // Shows or hides data column `col` (0-based), accounting for the gutter.
+    void setDataColumnHidden(int col, bool hidden) {
+        setColumnHidden(col + gutterColumns(), hidden);
+    }
+
   private:
     void ensureRow(int row);
     void applyRowBackground(int row);

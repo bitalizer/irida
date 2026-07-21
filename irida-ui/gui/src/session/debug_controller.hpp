@@ -20,6 +20,14 @@ class DebugController : public QObject {
     IridaSession* session() const {
         return session_;
     }
+    SessionKind kind() const {
+        return session_kind_;
+    }
+    // True when a live process backs the session (registers, stepping, live
+    // values are meaningful). False for a static file session.
+    bool isLive() const {
+        return session_kind_ == SessionKind::Native;
+    }
 
     // Replaces the active session, destroying the previous one with the
     // destructor matching how it was created.

@@ -7,10 +7,13 @@
 RegistersPanel::RegistersPanel(DebugController* controller, QWidget* parent)
     : IridaTableView({"Register", "Value", "Hint"}, parent), controller_(controller) {
     connect(controller_, &DebugController::stateChanged, this, &RegistersPanel::refresh);
+    // The Hint column shows dereferenced live values; hide it without a process.
+    setDataColumnHidden(2, !controller_->isLive());
 }
 
 void RegistersPanel::refresh() {
     IridaSession* s = controller_->session();
+    setDataColumnHidden(2, !controller_->isLive());
     const IridaRegister* regs = nullptr;
     size_t n = irida_registers(s, &regs);
     setRows(static_cast<int>(n));
