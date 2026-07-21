@@ -23,11 +23,14 @@
 #include <QApplication>
 #include <QCloseEvent>
 #include <QDockWidget>
+#include <QLabel>
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QProgressBar>
 #include <QScreen>
 #include <QSettings>
+#include <QStatusBar>
 #include <QTimer>
 #include <QToolBar>
 
@@ -41,6 +44,7 @@ MainWindow::MainWindow(IridaSession* session, SessionKind kind, QWidget* parent)
     buildMenuBar();
     buildToolbar();
     buildDocks();
+    buildStatusBar();
 
     // navigation: follow address in memory panel + scroll disasm
     connect(controller_, &DebugController::navigationRequested, this, [this](uint64_t addr) {
@@ -53,8 +57,11 @@ MainWindow::MainWindow(IridaSession* session, SessionKind kind, QWidget* parent)
 
     // Populate the panels after construction returns and the window is shown,
     // so the first data load runs on the event loop rather than blocking the
-    // window from ever appearing.
-    QTimer::singleShot(0, controller_, &DebugController::refreshViews);
+    // window from ever appearing, then kick off analysis on a worker thread.
+    QTimer::singleShot(0, controller_, [this] {
+        controller_->refreshViews();
+        controller_->runAnalysis();
+    });
 }
 
 void MainWindow::buildMenuBar() {
@@ -200,6 +207,29 @@ void MainWindow::buildDocks() {
     }
     if (firstBinfmt)
         firstBinfmt->raise();
+}
+
+void MainWindow::buildStatusBar() {
+    statusLabel_ = new QLabel("Ready", this);
+    statusBar()->addWidget(statusLabel_);
+
+    // An indeterminate bar (range 0..0) shown only while analysis runs.
+    statusProgress_ = new QProgressBar(this);
+    statusProgress_->setRange(0, 0);
+    statusProgress_->setMaximumWidth(160);
+    statusProgress_->setVisible(false);
+    statusBar()->addPermanentWidget(statusProgress_);
+
+    connect(controller_, &DebugController::analysisStarted, this, [this] {
+        statusLabel_->setText("Analyzing…");
+        statusProgress_->setVisible(true);
+    });
+    connect(controller_, &DebugController::analysisFinished, this, [this] {
+        const IridaFunction* fns = nullptr;
+        size_t n = irida_functions(controller_->session(), &fns);
+        statusLabel_->setText(QString("Analysis complete — %1 functions").arg(n));
+        statusProgress_->setVisible(false);
+    });
 }
 
 void MainWindow::restoreLayout() {

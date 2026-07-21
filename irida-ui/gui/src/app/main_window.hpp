@@ -4,6 +4,8 @@
 #include "session/debug_controller.hpp"
 #include <QMainWindow>
 class DebugController;
+class QLabel;
+class QProgressBar;
 class CpuWidget;
 class ModulesPanel;
 class BreakpointsPanel;
@@ -33,6 +35,7 @@ class MainWindow : public QMainWindow {
     void buildMenuBar();
     void buildToolbar();
     void buildDocks();
+    void buildStatusBar();
     void restoreLayout();
     void attachToProcess();
 
@@ -52,4 +55,7 @@ class MainWindow : public QMainWindow {
     FunctionsPanel* functions_;
     XrefsPanel* xrefs_;
     GraphView* graph_;
+
+    QLabel* statusLabel_;
+    QProgressBar* statusProgress_;
 };
