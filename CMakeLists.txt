@@ -26,6 +26,7 @@ add_subdirectory(irida-core/core/transport)
 add_subdirectory(irida-core/core/backend)
 add_subdirectory(irida-core/core/target)
 add_subdirectory(irida-core/core/disasm)
+add_subdirectory(irida-core/core/binfmt)
 
 # --- irida-api: the stable C ABI ---
 add_subdirectory(irida-api)
