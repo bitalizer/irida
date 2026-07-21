@@ -13,6 +13,7 @@
 #include <QWheelEvent>
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <functional>
 #include <unordered_map>
 
@@ -23,6 +24,7 @@ constexpr double kBlockPaddingY = 8.0;
 constexpr double kHorizontalSpacing = 40.0;
 constexpr double kVerticalSpacing = 60.0;
 constexpr double kArrowSize = 8.0;
+constexpr size_t kMaxBlockInsns = 256; // upper bound on instructions decoded per block
 
 // A basic-block box that reports double-clicks back to the GraphView so it can
 // navigate the session. Carries its block address as identity.
@@ -76,7 +78,6 @@ GraphView::GraphView(DebugController* controller, QWidget* parent)
 
     connect(controller_, &DebugController::stateChanged, this, &GraphView::refresh);
     connect(controller_, &DebugController::navigationRequested, this, &GraphView::onNavigation);
-    refresh();
 }
 
 void GraphView::refresh() {
@@ -115,27 +116,18 @@ std::vector<GraphView::Block> GraphView::buildBlocks(uint64_t fn_addr) const {
     for (size_t i = 0; i < n; ++i) {
         Block b;
         b.bb = bbs[i];
-        uint64_t covered = 0;
-        uint64_t at = b.bb.addr;
-        // Decode instruction-by-instruction until the block's byte span is
-        // covered. The mock/backends return a borrowed row array per call.
-        while (covered < b.bb.size) {
-            const IridaInsnRow* rows = nullptr;
-            size_t got = irida_disasm(s, at, 1, &rows);
-            if (got == 0 || rows == nullptr)
+        // Decode a generous run from the block start in one call, then keep the
+        // instructions that fall inside [addr, addr+size). One disasm call per
+        // block keeps the borrowed row array valid for the whole loop.
+        const IridaInsnRow* rows = nullptr;
+        size_t got = irida_disasm(s, b.bb.addr, kMaxBlockInsns, &rows);
+        uint64_t end = b.bb.addr + b.bb.size;
+        for (size_t r = 0; r < got; ++r) {
+            if (rows[r].address >= end)
                 break;
-            QString addr = QString("%1").arg(rows[0].address, 0, 16);
-            QString text = QString::fromUtf8(rows[0].text ? rows[0].text : "");
+            QString addr = QString("%1").arg(rows[r].address, 0, 16);
+            QString text = QString::fromUtf8(rows[r].text ? rows[r].text : "");
             b.lines << (addr + "  " + text);
-            const IridaInsnRow* next = nullptr;
-            size_t nn = irida_disasm(s, at, 2, &next);
-            if (nn >= 2) {
-                uint64_t step = next[1].address - at;
-                covered += step;
-                at = next[1].address;
-            } else {
-                break;
-            }
         }
         if (b.lines.isEmpty())
             b.lines << QString("%1").arg(b.bb.addr, 0, 16);
