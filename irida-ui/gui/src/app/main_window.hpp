@@ -10,6 +10,11 @@ class ThreadsPanel;
 class MemoryMapPanel;
 class BacktracePanel;
 class ConsolePanel;
+class SectionsPanel;
+class ImportsPanel;
+class ExportsPanel;
+class SymbolsPanel;
+class StringsPanel;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -34,4 +39,9 @@ class MainWindow : public QMainWindow {
     MemoryMapPanel* memoryMap_;
     BacktracePanel* backtrace_;
     ConsolePanel* console_;
+    SectionsPanel* sections_;
+    ImportsPanel* imports_;
+    ExportsPanel* exports_;
+    SymbolsPanel* symbols_;
+    StringsPanel* strings_;
 };

@@ -2,6 +2,11 @@
 #include "app/main_window.hpp"
 #include "dialogs/attach_proc_dialog.hpp"
 #include "layouts/cpu_widget.hpp"
+#include "panels/binfmt/exports_panel.hpp"
+#include "panels/binfmt/imports_panel.hpp"
+#include "panels/binfmt/sections_panel.hpp"
+#include "panels/binfmt/strings_panel.hpp"
+#include "panels/binfmt/symbols_panel.hpp"
 #include "panels/console/console_panel.hpp"
 #include "panels/execution/backtrace_panel.hpp"
 #include "panels/execution/breakpoints_panel.hpp"
@@ -103,6 +108,11 @@ void MainWindow::buildDocks() {
     memoryMap_ = new MemoryMapPanel(controller_, this);
     backtrace_ = new BacktracePanel(controller_, this);
     console_ = new ConsolePanel(controller_, this);
+    sections_ = new SectionsPanel(controller_, this);
+    imports_ = new ImportsPanel(controller_, this);
+    exports_ = new ExportsPanel(controller_, this);
+    symbols_ = new SymbolsPanel(controller_, this);
+    strings_ = new StringsPanel(controller_, this);
 
     auto* modDock = new QDockWidget("Modules", this);
     modDock->setObjectName("ModulesDock");
@@ -139,6 +149,30 @@ void MainWindow::buildDocks() {
     tabifyDockWidget(threadsDock, mapDock);
     tabifyDockWidget(mapDock, btDock);
     modDock->raise();
+
+    struct BinfmtDock {
+        const char* title;
+        const char* objectName;
+        QWidget* widget;
+    };
+    const BinfmtDock binfmtDocks[] = {
+        {"Sections", "SectionsDock", sections_}, {"Imports", "ImportsDock", imports_},
+        {"Exports", "ExportsDock", exports_},    {"Symbols", "SymbolsDock", symbols_},
+        {"Strings", "StringsDock", strings_},
+    };
+    QDockWidget* firstBinfmt = nullptr;
+    for (const auto& d : binfmtDocks) {
+        auto* dock = new QDockWidget(d.title, this);
+        dock->setObjectName(d.objectName);
+        dock->setWidget(d.widget);
+        addDockWidget(Qt::LeftDockWidgetArea, dock);
+        if (firstBinfmt)
+            tabifyDockWidget(firstBinfmt, dock);
+        else
+            firstBinfmt = dock;
+    }
+    if (firstBinfmt)
+        firstBinfmt->raise();
 }
 
 void MainWindow::restoreLayout() {
