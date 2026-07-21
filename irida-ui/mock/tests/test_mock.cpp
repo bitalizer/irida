@@ -17,7 +17,7 @@ int main() {
     assert(nmods == 2);
 
     const IridaInsnRow* rows = nullptr;
-    size_t n = irida_disasm(s, 0x1000, 4, &rows);
+    size_t n = irida_disasm(s, irida_pc(s), 4, &rows);
     assert(n >= 1);
     assert(std::strcmp(rows[0].text, "mov rcx, [rax+8]") == 0);
     assert(rows[0].annotation != nullptr);
