@@ -13,6 +13,7 @@
 #include "panels/execution/backtrace_panel.hpp"
 #include "panels/execution/breakpoints_panel.hpp"
 #include "panels/execution/threads_panel.hpp"
+#include "panels/graph/graph_view.hpp"
 #include "panels/memory/memory_map_panel.hpp"
 #include "panels/memory/memory_panel.hpp"
 #include "panels/symbols/modules_panel.hpp"
@@ -110,6 +111,7 @@ void MainWindow::buildDocks() {
     memoryMap_ = new MemoryMapPanel(controller_, this);
     backtrace_ = new BacktracePanel(controller_, this);
     console_ = new ConsolePanel(controller_, this);
+    graph_ = new GraphView(controller_, this);
     sections_ = new SectionsPanel(controller_, this);
     imports_ = new ImportsPanel(controller_, this);
     exports_ = new ExportsPanel(controller_, this);
@@ -153,11 +155,17 @@ void MainWindow::buildDocks() {
     consoleDock->setWidget(console_);
     addDockWidget(Qt::BottomDockWidgetArea, consoleDock);
 
+    auto* graphDock = new QDockWidget("Graph", this);
+    graphDock->setObjectName("GraphDock");
+    graphDock->setWidget(graph_);
+    addDockWidget(Qt::RightDockWidgetArea, graphDock);
+
     tabifyDockWidget(modDock, bpDock);
     tabifyDockWidget(bpDock, threadsDock);
     tabifyDockWidget(threadsDock, mapDock);
     tabifyDockWidget(mapDock, btDock);
     tabifyDockWidget(btDock, xrefsDock);
+    tabifyDockWidget(xrefsDock, graphDock);
     modDock->raise();
 
     struct BinfmtDock {

@@ -17,6 +17,7 @@ class SymbolsPanel;
 class StringsPanel;
 class FunctionsPanel;
 class XrefsPanel;
+class GraphView;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -48,4 +49,5 @@ class MainWindow : public QMainWindow {
     StringsPanel* strings_;
     FunctionsPanel* functions_;
     XrefsPanel* xrefs_;
+    GraphView* graph_;
 };
