@@ -18,6 +18,7 @@ add_executable(irida_gui
   src/panels/disassembly/disassembly_panel.cpp
   src/panels/registers/registers_panel.cpp
   src/panels/memory/memory_panel.cpp
+  src/panels/memory/memory_map_panel.cpp
   src/panels/memory/stack_panel.cpp
   src/panels/symbols/modules_panel.cpp
   src/panels/execution/breakpoints_panel.cpp
