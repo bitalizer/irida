@@ -9,14 +9,21 @@ DisassemblyPanel::DisassemblyPanel(DebugController* controller, QWidget* parent)
     installGutterDelegate();
     installAsmDelegate(2); // syntax-highlight the Instruction column
     connect(controller_, &DebugController::stateChanged, this, &DisassemblyPanel::refresh);
+    connect(controller_, &DebugController::navigationRequested, this, &DisassemblyPanel::setBase);
     connect(this, &QTableWidget::cellClicked, this, &DisassemblyPanel::onCellClicked);
+    refresh();
+}
+
+void DisassemblyPanel::setBase(uint64_t addr) {
+    base_ = addr;
     refresh();
 }
 
 void DisassemblyPanel::refresh() {
     IridaSession* s = controller_->session();
     const IridaInsnRow* rows = nullptr;
-    size_t n = irida_disasm(s, 0, 256, &rows);
+    uint64_t at = base_ ? base_ : irida_pc(s);
+    size_t n = irida_disasm(s, at, 256, &rows);
     setRows(static_cast<int>(n));
     row_addrs_.clear();
     for (size_t i = 0; i < n; ++i) {
@@ -25,7 +32,7 @@ void DisassemblyPanel::refresh() {
         setCell(r, 0, formatAddress(rows[i].address));
         if (auto* addrIt = item(r, 0 + gutterColumns()))
             addrIt->setForeground(theme::address());
-        setCell(r, 1, QString()); // raw bytes: engine data, blank under the mock
+        setCell(r, 1, QString::fromUtf8(rows[i].bytes ? rows[i].bytes : ""));
         setCell(r, 2, QString::fromUtf8(rows[i].text));
         // Live-value: our differentiator, painted in the accent color.
         if (rows[i].annotation) {

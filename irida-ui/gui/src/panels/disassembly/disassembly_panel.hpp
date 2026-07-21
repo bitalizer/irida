@@ -11,6 +11,7 @@ class DisassemblyPanel : public IridaTableView {
     explicit DisassemblyPanel(DebugController* controller, QWidget* parent = nullptr);
   public slots:
     void refresh();
+    void setBase(uint64_t addr);
 
   private slots:
     void onCellClicked(int row, int col);
@@ -18,4 +19,5 @@ class DisassemblyPanel : public IridaTableView {
   private:
     DebugController* controller_;
     std::vector<uint64_t> row_addrs_;
+    uint64_t base_ = 0;
 };
