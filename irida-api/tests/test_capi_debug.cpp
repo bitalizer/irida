@@ -10,6 +10,7 @@ struct Ctx {
     uint64_t epoch = 7;
     int step_into_calls = 0;
     IridaBreakpoint bps[2] = {{0x1000, 1, IRIDA_BP_SOFTWARE}, {0x1004, 0, IRIDA_BP_HARDWARE}};
+    IridaFrame frames[2] = {{0x2000, 0x3000}, {0x1500, 0x3100}};
 };
 IridaRunState rs(void*) {
     return IRIDA_STOPPED;
@@ -38,6 +39,10 @@ size_t bps(void* c, const IridaBreakpoint** out) {
 }
 void bp_toggle(void*, uint64_t) {}
 void bp_set_enabled(void*, uint64_t, int) {}
+size_t backtrace(void* c, const IridaFrame** out) {
+    *out = static_cast<Ctx*>(c)->frames;
+    return 2;
+}
 
 // existing three left null here (we only test the new surface)
 IridaBackendVTable make_vt() {
@@ -57,6 +62,7 @@ IridaBackendVTable make_vt() {
     vt.breakpoints = bps;
     vt.bp_toggle = bp_toggle;
     vt.bp_set_enabled = bp_set_enabled;
+    vt.backtrace = backtrace;
     return vt;
 }
 } // namespace
@@ -92,6 +98,15 @@ int main() {
     assert(irida_read_memory(nullptr, 0, buf, sizeof(buf)) == 0);
     const IridaBreakpoint* o2 = nullptr;
     assert(irida_breakpoints(nullptr, &o2) == 0);
+
+    const IridaFrame* fr = nullptr;
+    size_t fn = irida_backtrace(s, &fr);
+    assert(fn == 2);
+    assert(fr[0].pc == 0x2000 && fr[0].frame_ptr == 0x3000);
+    assert(fr[1].pc == 0x1500 && fr[1].frame_ptr == 0x3100);
+
+    const IridaFrame* fr2 = nullptr;
+    assert(irida_backtrace(nullptr, &fr2) == 0);
 
     irida_session_destroy(s);
     return 0;

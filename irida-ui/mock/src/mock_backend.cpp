@@ -52,6 +52,7 @@ struct MockState {
     std::vector<IridaRegister> reg_view;
     std::vector<std::string> reg_hints;
     std::vector<IridaInsnRow> row_view;
+    std::vector<IridaFrame> frame_view;
 
     MockState() {
         reset_regs();
@@ -160,6 +161,7 @@ size_t mock_disasm(void*, uint64_t /*addr*/, size_t count, const IridaInsnRow** 
         row.address = kStream[i].address;
         row.text = kStream[i].text;
         row.annotation = kStream[i].annotation;
+        row.bytes = kStream[i].bytes;
         s.row_view.push_back(row);
     }
     *out = s.row_view.data();
@@ -255,11 +257,21 @@ void mock_bp_set_enabled(void*, uint64_t addr, int enabled) {
             b.enabled = enabled ? 1 : 0;
 }
 
+size_t mock_backtrace(void*, const IridaFrame** out) {
+    MockState& s = state();
+    s.frame_view.clear();
+    s.frame_view.push_back(IridaFrame{s.pc, s.regs[RBP]});
+    s.frame_view.push_back(IridaFrame{kStream[kStreamLen - 2].address, s.regs[RBP] + 0x30});
+    s.frame_view.push_back(IridaFrame{0x00007FF6AA012000ULL, s.regs[RBP] + 0x70});
+    *out = s.frame_view.data();
+    return s.frame_view.size();
+}
+
 const IridaBackendVTable kVTable = {
-    mock_registers,   mock_modules,     mock_maps,      mock_threads,       mock_disasm,
-    mock_run_state,   mock_pc,          mock_epoch,     mock_step_into,     mock_step_over,
-    mock_step_out,    mock_cont,        mock_brk,       mock_restart,       mock_stop,
-    mock_read_memory, mock_breakpoints, mock_bp_toggle, mock_bp_set_enabled};
+    mock_registers,   mock_modules,     mock_maps,      mock_threads,        mock_disasm,
+    mock_run_state,   mock_pc,          mock_epoch,     mock_step_into,      mock_step_over,
+    mock_step_out,    mock_cont,        mock_brk,       mock_restart,        mock_stop,
+    mock_read_memory, mock_breakpoints, mock_bp_toggle, mock_bp_set_enabled, mock_backtrace};
 
 } // namespace
 

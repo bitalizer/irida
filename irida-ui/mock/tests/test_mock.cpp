@@ -22,6 +22,13 @@ int main() {
     assert(std::strcmp(rows[0].text, "mov rcx, [rax+8]") == 0);
     assert(rows[0].annotation != nullptr);
     assert(std::strstr(rows[0].annotation, "ntdll.dll") != nullptr);
+    assert(rows[0].bytes != nullptr);
+    assert(std::strcmp(rows[0].bytes, "48 8B 48 08") == 0);
+
+    const IridaFrame* frames = nullptr;
+    size_t nframes = irida_backtrace(s, &frames);
+    assert(nframes >= 1);
+    assert(frames[0].pc == irida_pc(s));
 
     irida_session_destroy(s);
     return 0;

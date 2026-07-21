@@ -7,6 +7,7 @@
 #include "irida/target/target.hpp"
 #include <cstring>
 #include <new>
+#include <span>
 #include <string>
 #include <utility>
 #include <vector>
@@ -21,6 +22,21 @@ using irida::disasm::make_x86_64_disassembler;
 using irida::target::Target;
 
 constexpr size_t kMaxInsnBytes = 15; // longest possible x86-64 instruction
+constexpr size_t kMaxBacktraceFrames = 64;
+
+std::string format_bytes(std::span<const std::byte> bytes) {
+    static const char* digits = "0123456789ABCDEF";
+    std::string out;
+    out.reserve(bytes.size() * 3);
+    for (size_t i = 0; i < bytes.size(); ++i) {
+        auto v = static_cast<unsigned>(bytes[i]);
+        if (i != 0)
+            out.push_back(' ');
+        out.push_back(digits[(v >> 4) & 0xf]);
+        out.push_back(digits[v & 0xf]);
+    }
+    return out;
+}
 
 } // namespace
 
@@ -37,8 +53,11 @@ struct IridaCoreCtx {
 
     std::vector<IridaInsnRow> insn_rows;
     std::vector<std::string> insn_text;
+    std::vector<std::string> insn_bytes;
 
     std::vector<IridaBreakpoint> bp_rows;
+
+    std::vector<IridaFrame> frame_rows;
 
     std::vector<IridaModule> module_rows;
     std::vector<std::string> module_names;
@@ -144,6 +163,7 @@ size_t core_disasm(void* ctx, uint64_t addr, size_t count, const IridaInsnRow** 
     IridaCoreCtx* c = ctx_of(ctx);
     c->insn_rows.clear();
     c->insn_text.clear();
+    c->insn_bytes.clear();
     *out = nullptr;
 
     if (count == 0)
@@ -155,14 +175,55 @@ size_t core_disasm(void* ctx, uint64_t addr, size_t count, const IridaInsnRow** 
 
     auto insns = c->disasm->decode_linear(bytes.value(), addr, count);
     c->insn_text.reserve(insns.size());
+    c->insn_bytes.reserve(insns.size());
     c->insn_rows.reserve(insns.size());
     for (const auto& insn : insns) {
         c->insn_text.push_back(insn.text);
-        c->insn_rows.push_back(IridaInsnRow{insn.address, c->insn_text.back().c_str(), nullptr});
+
+        size_t offset = static_cast<size_t>(insn.address - addr);
+        size_t len = insn.length;
+        len = offset + len <= bytes.value().size() ? len : bytes.value().size() - offset;
+        c->insn_bytes.push_back(format_bytes(std::span(bytes.value()).subspan(offset, len)));
+
+        c->insn_rows.push_back(IridaInsnRow{insn.address, c->insn_text.back().c_str(), nullptr,
+                                            c->insn_bytes.back().c_str()});
     }
 
     *out = c->insn_rows.empty() ? nullptr : c->insn_rows.data();
     return c->insn_rows.size();
+}
+
+size_t core_backtrace(void* ctx, const IridaFrame** out) {
+    IridaCoreCtx* c = ctx_of(ctx);
+    c->frame_rows.clear();
+    *out = nullptr;
+
+    const auto& regs = c->target.registers();
+    uint64_t pc = regs.get("rip").value_or(0);
+    uint64_t fp = regs.get("rbp").value_or(0);
+
+    c->frame_rows.push_back(IridaFrame{pc, fp});
+
+    for (size_t i = 0; i < kMaxBacktraceFrames; ++i) {
+        auto frame_mem = c->target.read_memory(fp, 16);
+        if (!frame_mem.has_value() || frame_mem.value().size() < 16)
+            break;
+
+        const auto* bytes = frame_mem.value().data();
+        uint64_t saved_rbp = 0;
+        uint64_t ret_addr = 0;
+        std::memcpy(&saved_rbp, bytes, sizeof(saved_rbp));
+        std::memcpy(&ret_addr, bytes + 8, sizeof(ret_addr));
+
+        if (saved_rbp <= fp || ret_addr == 0)
+            break;
+
+        c->frame_rows.push_back(IridaFrame{ret_addr, saved_rbp});
+        fp = saved_rbp;
+    }
+
+    *out = c->frame_rows.empty() ? nullptr : c->frame_rows.data();
+    return c->frame_rows.size();
 }
 
 IridaRunState core_run_state(void* /*ctx*/) {
@@ -235,10 +296,10 @@ void core_bp_set_enabled(void* /*ctx*/, uint64_t /*addr*/, int /*enabled*/) {
 }
 
 const IridaBackendVTable kCoreVTable = {
-    core_registers,   core_modules,     core_maps,        core_threads,       core_disasm,
-    core_run_state,   core_pc,          core_state_epoch, core_step_into,     core_step_over,
-    core_step_out,    core_cont,        core_brk,         core_restart,       core_stop,
-    core_read_memory, core_breakpoints, core_bp_toggle,   core_bp_set_enabled};
+    core_registers,   core_modules,     core_maps,        core_threads,        core_disasm,
+    core_run_state,   core_pc,          core_state_epoch, core_step_into,      core_step_over,
+    core_step_out,    core_cont,        core_brk,         core_restart,        core_stop,
+    core_read_memory, core_breakpoints, core_bp_toggle,   core_bp_set_enabled, core_backtrace};
 
 } // namespace
 

@@ -38,7 +38,13 @@ typedef struct IridaInsnRow {
     uint64_t address;
     const char* text;       /* e.g. "mov rcx, [rax+8]" */
     const char* annotation; /* e.g. "\"C:\\...\\ntdll.dll\""; may be NULL */
+    const char* bytes;      /* raw opcode bytes, e.g. "48 8B 48 08" */
 } IridaInsnRow;
+
+typedef struct IridaFrame {
+    uint64_t pc;
+    uint64_t frame_ptr;
+} IridaFrame;
 
 typedef enum IridaRunState { IRIDA_STOPPED = 0, IRIDA_RUNNING = 1 } IridaRunState;
 
@@ -71,6 +77,7 @@ typedef struct IridaBackendVTable {
     size_t (*breakpoints)(void* ctx, const IridaBreakpoint** out);
     void (*bp_toggle)(void* ctx, uint64_t addr);
     void (*bp_set_enabled)(void* ctx, uint64_t addr, int enabled);
+    size_t (*backtrace)(void* ctx, const IridaFrame** out);
 } IridaBackendVTable;
 
 IridaSession* irida_session_create(const IridaBackendVTable* vt, void* ctx);
@@ -104,6 +111,7 @@ size_t irida_read_memory(IridaSession* s, uint64_t addr, uint8_t* buf, size_t le
 size_t irida_breakpoints(IridaSession* s, const IridaBreakpoint** out);
 void irida_bp_toggle(IridaSession* s, uint64_t addr);
 void irida_bp_set_enabled(IridaSession* s, uint64_t addr, int enabled);
+size_t irida_backtrace(IridaSession* s, const IridaFrame** out);
 
 #ifdef __cplusplus
 } /* extern "C" */

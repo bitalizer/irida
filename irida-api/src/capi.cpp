@@ -145,4 +145,14 @@ void irida_bp_set_enabled(IridaSession* s, uint64_t addr, int enabled) {
         s->vt.bp_set_enabled(s->ctx, addr, enabled);
 }
 
+size_t irida_backtrace(IridaSession* s, const IridaFrame** out) {
+    if (!out)
+        return 0;
+    if (!s || !s->vt.backtrace) {
+        *out = nullptr;
+        return 0;
+    }
+    return s->vt.backtrace(s->ctx, out);
+}
+
 } // extern "C"
