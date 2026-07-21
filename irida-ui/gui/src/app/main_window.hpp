@@ -15,6 +15,8 @@ class ImportsPanel;
 class ExportsPanel;
 class SymbolsPanel;
 class StringsPanel;
+class FunctionsPanel;
+class XrefsPanel;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -44,4 +46,6 @@ class MainWindow : public QMainWindow {
     ExportsPanel* exports_;
     SymbolsPanel* symbols_;
     StringsPanel* strings_;
+    FunctionsPanel* functions_;
+    XrefsPanel* xrefs_;
 };

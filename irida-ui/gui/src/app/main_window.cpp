@@ -2,6 +2,8 @@
 #include "app/main_window.hpp"
 #include "dialogs/attach_proc_dialog.hpp"
 #include "layouts/cpu_widget.hpp"
+#include "panels/analysis/functions_panel.hpp"
+#include "panels/analysis/xrefs_panel.hpp"
 #include "panels/binfmt/exports_panel.hpp"
 #include "panels/binfmt/imports_panel.hpp"
 #include "panels/binfmt/sections_panel.hpp"
@@ -113,6 +115,8 @@ void MainWindow::buildDocks() {
     exports_ = new ExportsPanel(controller_, this);
     symbols_ = new SymbolsPanel(controller_, this);
     strings_ = new StringsPanel(controller_, this);
+    functions_ = new FunctionsPanel(controller_, this);
+    xrefs_ = new XrefsPanel(controller_, this);
 
     auto* modDock = new QDockWidget("Modules", this);
     modDock->setObjectName("ModulesDock");
@@ -139,6 +143,11 @@ void MainWindow::buildDocks() {
     btDock->setWidget(backtrace_);
     addDockWidget(Qt::RightDockWidgetArea, btDock);
 
+    auto* xrefsDock = new QDockWidget("Xrefs", this);
+    xrefsDock->setObjectName("XrefsDock");
+    xrefsDock->setWidget(xrefs_);
+    addDockWidget(Qt::RightDockWidgetArea, xrefsDock);
+
     auto* consoleDock = new QDockWidget("Console", this);
     consoleDock->setObjectName("ConsoleDock");
     consoleDock->setWidget(console_);
@@ -148,6 +157,7 @@ void MainWindow::buildDocks() {
     tabifyDockWidget(bpDock, threadsDock);
     tabifyDockWidget(threadsDock, mapDock);
     tabifyDockWidget(mapDock, btDock);
+    tabifyDockWidget(btDock, xrefsDock);
     modDock->raise();
 
     struct BinfmtDock {
@@ -158,7 +168,7 @@ void MainWindow::buildDocks() {
     const BinfmtDock binfmtDocks[] = {
         {"Sections", "SectionsDock", sections_}, {"Imports", "ImportsDock", imports_},
         {"Exports", "ExportsDock", exports_},    {"Symbols", "SymbolsDock", symbols_},
-        {"Strings", "StringsDock", strings_},
+        {"Strings", "StringsDock", strings_},    {"Functions", "FunctionsDock", functions_},
     };
     QDockWidget* firstBinfmt = nullptr;
     for (const auto& d : binfmtDocks) {
