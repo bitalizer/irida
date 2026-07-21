@@ -1,0 +1,30 @@
+// SPDX-License-Identifier: BUSL-1.1
+#include "panels/binfmt/imports_panel.hpp"
+#include "session/debug_controller.hpp"
+
+ImportsPanel::ImportsPanel(DebugController* controller, QWidget* parent)
+    : IridaTableView({"Name", "Library", "Address"}, parent), controller_(controller) {
+    connect(controller_, &DebugController::stateChanged, this, &ImportsPanel::refresh);
+    connect(this, &QTableWidget::cellDoubleClicked, this, &ImportsPanel::onDoubleClicked);
+    refresh();
+}
+
+void ImportsPanel::refresh() {
+    IridaSession* s = controller_->session();
+    const IridaImport* imports = nullptr;
+    size_t n = irida_imports(s, &imports);
+    setRows(static_cast<int>(n));
+    addrs_.clear();
+    for (size_t i = 0; i < n; ++i) {
+        int r = static_cast<int>(i);
+        addrs_.push_back(imports[i].addr);
+        setCell(r, 0, QString::fromUtf8(imports[i].name));
+        setCell(r, 1, QString::fromUtf8(imports[i].library));
+        setCell(r, 2, formatAddress(imports[i].addr));
+    }
+}
+
+void ImportsPanel::onDoubleClicked(int row, int /*col*/) {
+    if (row >= 0 && row < static_cast<int>(addrs_.size()))
+        controller_->navigateTo(addrs_[static_cast<size_t>(row)]);
+}
