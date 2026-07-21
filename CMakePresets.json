@@ -10,7 +10,18 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "IRIDA_GUI": "ON",
-        "CMAKE_PREFIX_PATH": "C:/Qt/6.11.1/msvc2022_64"
+        "CMAKE_PREFIX_PATH": "$env{QT_ROOT}"
+      }
+    },
+    {
+      "name": "gui-release",
+      "displayName": "GUI Release (MSVC + Qt)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/gui-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "IRIDA_GUI": "ON",
+        "CMAKE_PREFIX_PATH": "$env{QT_ROOT}"
       }
     },
     {
@@ -26,6 +37,7 @@
   ],
   "buildPresets": [
     { "name": "gui-debug", "configurePreset": "gui-debug" },
+    { "name": "gui-release", "configurePreset": "gui-release" },
     { "name": "headless-debug", "configurePreset": "headless-debug" }
   ],
   "testPresets": [

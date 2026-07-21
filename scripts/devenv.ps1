@@ -50,3 +50,22 @@ cmd /c "`"$vcvars`" >nul 2>&1 && set" | ForEach-Object {
 
 $env:IRIDA_DEVENV_LOADED = '1'
 Write-Host "devenv: MSVC x64 environment loaded (cl.exe, INCLUDE, LIB ready)."
+
+# QT_ROOT feeds CMAKE_PREFIX_PATH in the GUI presets, keeping the machine-specific
+# Qt path out of the tracked CMakePresets.json. Honor an existing value; otherwise
+# discover the newest C:\Qt\6.*\msvc*_64 kit.
+if (-not $env:QT_ROOT) {
+    $qtKit = Get-ChildItem -Path 'C:\Qt' -Directory -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -match '^6\.' } |
+        Sort-Object Name -Descending |
+        ForEach-Object { Get-ChildItem -Path $_.FullName -Directory -Filter 'msvc*_64' -ErrorAction SilentlyContinue } |
+        Select-Object -First 1
+    if ($qtKit) {
+        $env:QT_ROOT = $qtKit.FullName
+    }
+}
+if ($env:QT_ROOT) {
+    Write-Host "devenv: QT_ROOT = $env:QT_ROOT"
+} else {
+    Write-Host "devenv: QT_ROOT not set and no C:\Qt\6.* kit found (GUI presets need it)."
+}
