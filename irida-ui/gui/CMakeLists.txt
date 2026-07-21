@@ -21,6 +21,7 @@ add_executable(irida_gui
   src/panels/memory/memory_map_panel.cpp
   src/panels/memory/stack_panel.cpp
   src/panels/symbols/modules_panel.cpp
+  src/panels/binfmt/sections_panel.cpp
   src/panels/execution/breakpoints_panel.cpp
   src/panels/execution/threads_panel.cpp
   src/panels/console/console_panel.cpp
