@@ -4,6 +4,7 @@
 #include <QFileInfo>
 #include <QLabel>
 #include <QListWidget>
+#include <QLocale>
 #include <QPushButton>
 #include <QSettings>
 #include <QVBoxLayout>
@@ -50,7 +51,9 @@ void WelcomeDialog::populateRecent() {
     const QStringList files = recentFiles();
     for (const QString& path : files) {
         QFileInfo info(path);
-        auto* item = new QListWidgetItem(info.fileName() + "  —  " + info.absolutePath(), recent_);
+        QString size = info.exists() ? QLocale().formattedDataSize(info.size()) : "missing";
+        QString label = QString("%1  —  %2  (%3)").arg(info.fileName(), info.absolutePath(), size);
+        auto* item = new QListWidgetItem(label, recent_);
         item->setData(Qt::UserRole, path);
         item->setToolTip(path);
     }
