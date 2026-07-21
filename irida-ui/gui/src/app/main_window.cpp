@@ -44,7 +44,11 @@ MainWindow::MainWindow(IridaSession* session, SessionKind kind, QWidget* parent)
     buildMenuBar();
     buildToolbar();
     buildDocks();
+    buildViewMenu();
     buildStatusBar();
+
+    // Snapshot the freshly-built layout so Reset Layout can return to it.
+    defaultState_ = saveState();
 
     // navigation: follow address in memory panel + scroll disasm
     connect(controller_, &DebugController::navigationRequested, this, [this](uint64_t addr) {
@@ -136,45 +140,25 @@ void MainWindow::buildDocks() {
     functions_ = new FunctionsPanel(controller_, this);
     xrefs_ = new XrefsPanel(controller_, this);
 
-    auto* modDock = new QDockWidget("Modules", this);
-    modDock->setObjectName("ModulesDock");
-    modDock->setWidget(modules_);
-    addDockWidget(Qt::RightDockWidgetArea, modDock);
+    // Creates a dock, tracks it for the View menu, and adds it to an area.
+    auto addDock = [this](const char* title, const char* objectName, QWidget* widget,
+                          Qt::DockWidgetArea area) {
+        auto* dock = new QDockWidget(title, this);
+        dock->setObjectName(objectName);
+        dock->setWidget(widget);
+        addDockWidget(area, dock);
+        docks_.push_back(dock);
+        return dock;
+    };
 
-    auto* bpDock = new QDockWidget("Breakpoints", this);
-    bpDock->setObjectName("BreakpointsDock");
-    bpDock->setWidget(breakpoints_);
-    addDockWidget(Qt::RightDockWidgetArea, bpDock);
-
-    auto* threadsDock = new QDockWidget("Threads", this);
-    threadsDock->setObjectName("ThreadsDock");
-    threadsDock->setWidget(threads_);
-    addDockWidget(Qt::RightDockWidgetArea, threadsDock);
-
-    auto* mapDock = new QDockWidget("Memory Map", this);
-    mapDock->setObjectName("MemoryMapDock");
-    mapDock->setWidget(memoryMap_);
-    addDockWidget(Qt::RightDockWidgetArea, mapDock);
-
-    auto* btDock = new QDockWidget("Backtrace", this);
-    btDock->setObjectName("BacktraceDock");
-    btDock->setWidget(backtrace_);
-    addDockWidget(Qt::RightDockWidgetArea, btDock);
-
-    auto* xrefsDock = new QDockWidget("Xrefs", this);
-    xrefsDock->setObjectName("XrefsDock");
-    xrefsDock->setWidget(xrefs_);
-    addDockWidget(Qt::RightDockWidgetArea, xrefsDock);
-
-    auto* consoleDock = new QDockWidget("Console", this);
-    consoleDock->setObjectName("ConsoleDock");
-    consoleDock->setWidget(console_);
-    addDockWidget(Qt::BottomDockWidgetArea, consoleDock);
-
-    auto* graphDock = new QDockWidget("Graph", this);
-    graphDock->setObjectName("GraphDock");
-    graphDock->setWidget(graph_);
-    addDockWidget(Qt::RightDockWidgetArea, graphDock);
+    auto* modDock = addDock("Modules", "ModulesDock", modules_, Qt::RightDockWidgetArea);
+    auto* bpDock = addDock("Breakpoints", "BreakpointsDock", breakpoints_, Qt::RightDockWidgetArea);
+    auto* threadsDock = addDock("Threads", "ThreadsDock", threads_, Qt::RightDockWidgetArea);
+    auto* mapDock = addDock("Memory Map", "MemoryMapDock", memoryMap_, Qt::RightDockWidgetArea);
+    auto* btDock = addDock("Backtrace", "BacktraceDock", backtrace_, Qt::RightDockWidgetArea);
+    auto* xrefsDock = addDock("Xrefs", "XrefsDock", xrefs_, Qt::RightDockWidgetArea);
+    addDock("Console", "ConsoleDock", console_, Qt::BottomDockWidgetArea);
+    auto* graphDock = addDock("Graph", "GraphDock", graph_, Qt::RightDockWidgetArea);
 
     tabifyDockWidget(modDock, bpDock);
     tabifyDockWidget(bpDock, threadsDock);
@@ -196,10 +180,7 @@ void MainWindow::buildDocks() {
     };
     QDockWidget* firstBinfmt = nullptr;
     for (const auto& d : binfmtDocks) {
-        auto* dock = new QDockWidget(d.title, this);
-        dock->setObjectName(d.objectName);
-        dock->setWidget(d.widget);
-        addDockWidget(Qt::LeftDockWidgetArea, dock);
+        auto* dock = addDock(d.title, d.objectName, d.widget, Qt::LeftDockWidgetArea);
         if (firstBinfmt)
             tabifyDockWidget(firstBinfmt, dock);
         else
@@ -207,6 +188,23 @@ void MainWindow::buildDocks() {
     }
     if (firstBinfmt)
         firstBinfmt->raise();
+}
+
+void MainWindow::buildViewMenu() {
+    auto* viewMenu = menuBar()->addMenu("&View");
+    // One checkable toggle per dock — closing a dock (its X) unchecks the entry,
+    // and re-checking it here brings the panel back, so nothing is ever lost.
+    for (QDockWidget* dock : docks_)
+        viewMenu->addAction(dock->toggleViewAction());
+    viewMenu->addSeparator();
+    QAction* reset = viewMenu->addAction("Reset Layout");
+    connect(reset, &QAction::triggered, this, &MainWindow::resetLayout);
+}
+
+void MainWindow::resetLayout() {
+    for (QDockWidget* dock : docks_)
+        dock->setVisible(true);
+    restoreState(defaultState_);
 }
 
 void MainWindow::buildStatusBar() {

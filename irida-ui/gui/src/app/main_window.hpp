@@ -2,8 +2,11 @@
 #pragma once
 #include "irida/irida.h"
 #include "session/debug_controller.hpp"
+#include <QByteArray>
 #include <QMainWindow>
+#include <vector>
 class DebugController;
+class QDockWidget;
 class QLabel;
 class QProgressBar;
 class CpuWidget;
@@ -35,8 +38,10 @@ class MainWindow : public QMainWindow {
     void buildMenuBar();
     void buildToolbar();
     void buildDocks();
+    void buildViewMenu();
     void buildStatusBar();
     void restoreLayout();
+    void resetLayout();
     void attachToProcess();
 
     DebugController* controller_;
@@ -58,4 +63,7 @@ class MainWindow : public QMainWindow {
 
     QLabel* statusLabel_;
     QProgressBar* statusProgress_;
+
+    std::vector<QDockWidget*> docks_;
+    QByteArray defaultState_; // window layout snapshot for Reset Layout
 };
