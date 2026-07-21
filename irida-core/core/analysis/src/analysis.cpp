@@ -43,14 +43,14 @@ class FunctionBuilder {
         while (!work.empty()) {
             uint64_t start = work.front();
             work.pop_front();
-            if (blocks_.count(start))
+            if (blocks_.contains(start))
                 continue;
 
             BasicBlock bb = trace_block(start, out_callees, out_xrefs);
             blocks_.emplace(bb.addr, bb);
 
             auto enqueue = [&](uint64_t succ) {
-                if (succ != 0 && !queued.count(succ)) {
+                if (succ != 0 && !queued.contains(succ)) {
                     queued.insert(succ);
                     work.push_back(succ);
                 }
@@ -77,7 +77,7 @@ class FunctionBuilder {
         while (true) {
             // Stop before an address that already leads another block: the run
             // falls straight through into it.
-            if (pc != start && leaders_.count(pc)) {
+            if (pc != start && leaders_.contains(pc)) {
                 bb.fail = pc;
                 break;
             }
@@ -180,7 +180,8 @@ class FunctionBuilder {
         tail.fail = bb.fail;
 
         uint64_t head_size = 0;
-        std::vector<uint64_t> head_instrs, tail_instrs;
+        std::vector<uint64_t> head_instrs;
+        std::vector<uint64_t> tail_instrs;
         for (uint64_t ia : bb.instr_addrs) {
             if (ia < leader) {
                 head_instrs.push_back(ia);
@@ -225,7 +226,7 @@ AnalysisResult Analyzer::analyze(std::span<const uint64_t> entry_points) {
     while (!work.empty()) {
         uint64_t entry = work.front();
         work.pop_front();
-        if (entry == 0 || analyzed.count(entry))
+        if (entry == 0 || analyzed.contains(entry))
             continue;
         analyzed.insert(entry);
 
@@ -248,7 +249,7 @@ AnalysisResult Analyzer::analyze(std::span<const uint64_t> entry_points) {
         result.functions.push_back(std::move(fn));
 
         for (uint64_t callee : callees) {
-            if (!queued.count(callee)) {
+            if (!queued.contains(callee)) {
                 queued.insert(callee);
                 work.push_back(callee);
             }

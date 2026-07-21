@@ -1,0 +1,35 @@
+# SPDX-License-Identifier: BUSL-1.1
+# Static analysis for the Irida core/api. Focus: real bugs, performance traps,
+# and modern-C++ hygiene. Style-only opinions that fight our clang-format
+# layout or add churn without catching defects are turned off individually.
+Checks: >
+  bugprone-*,
+  performance-*,
+  modernize-*,
+  portability-*,
+  readability-*,
+  cppcoreguidelines-pro-type-member-init,
+  cppcoreguidelines-slicing,
+  cppcoreguidelines-narrowing-conversions,
+  misc-definitions-in-headers,
+  misc-misplaced-const,
+  misc-redundant-expression,
+  misc-unused-using-decls,
+  -modernize-use-trailing-return-type,
+  -modernize-avoid-c-arrays,
+  -modernize-use-nodiscard,
+  -readability-identifier-length,
+  -readability-magic-numbers,
+  -readability-function-cognitive-complexity,
+  -readability-braces-around-statements,
+  -readability-named-parameter,
+  -readability-implicit-bool-conversion,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-narrowing-conversions
+
+# Warnings are informative, not fatal: the CI gate treats tidy as advisory so it
+# can flag issues in new code without blocking on pre-existing findings. Tighten
+# to a hard gate per-directory once the baseline is clean.
+WarningsAsErrors: ''
+HeaderFilterRegex: 'irida-(core|api)/.*'
+FormatStyle: file
