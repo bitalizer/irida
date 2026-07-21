@@ -150,7 +150,7 @@ void GraphView::layout(std::vector<Block>& blocks) const {
     for (Block& b : blocks) {
         double maxW = 0.0;
         for (const QString& line : b.lines)
-            maxW = std::max(maxW, fm.horizontalAdvance(line));
+            maxW = (std::max)(maxW, fm.horizontalAdvance(line));
         b.width = maxW + 2 * kBlockPaddingX;
         b.height = lineHeight * b.lines.size() + 2 * kBlockPaddingY;
     }
@@ -183,7 +183,7 @@ void GraphView::layout(std::vector<Block>& blocks) const {
     // still get placed below everything so they remain visible.
     int maxLayer = 0;
     for (int l : layer)
-        maxLayer = std::max(maxLayer, l);
+        maxLayer = (std::max)(maxLayer, l);
     for (size_t i = 0; i < blocks.size(); ++i) {
         if (layer[i] == -1)
             layer[i] = ++maxLayer;
@@ -205,7 +205,7 @@ void GraphView::layout(std::vector<Block>& blocks) const {
     // layer is centered horizontally around x = 0.
     int lastLayer = 0;
     for (const Block& b : blocks)
-        lastLayer = std::max(lastLayer, b.layer);
+        lastLayer = (std::max)(lastLayer, b.layer);
 
     std::vector<double> layerY(lastLayer + 1, 0.0);
     double y = 0.0;
@@ -214,7 +214,7 @@ void GraphView::layout(std::vector<Block>& blocks) const {
         double rowHeight = 0.0;
         for (const Block& b : blocks)
             if (b.layer == l)
-                rowHeight = std::max(rowHeight, b.height);
+                rowHeight = (std::max)(rowHeight, b.height);
         y += rowHeight + kVerticalSpacing;
     }
 

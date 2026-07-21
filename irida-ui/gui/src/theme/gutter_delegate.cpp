@@ -5,6 +5,7 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QStyle>
+#include <algorithm>
 
 GutterDelegate::GutterDelegate(QObject* parent) : QStyledItemDelegate(parent) {}
 
@@ -28,7 +29,7 @@ void GutterDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option
 
     // Breakpoint: a solid red dot (IDE convention), left side of the gutter.
     if (isBreakpoint_ && isBreakpoint_(row)) {
-        const int d = qMin(r.height() - 6, 12);
+        const int d = (std::min)(r.height() - 6, 12);
         const int cx = r.left() + 4 + d / 2;
         painter->setPen(Qt::NoPen);
         painter->setBrush(theme::breakpointDot());
@@ -37,7 +38,7 @@ void GutterDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option
 
     // Current IP: a filled right-pointing arrow (green), right side of the gutter.
     if (isCurrentIp_ && isCurrentIp_(row)) {
-        const int h = qMin(r.height() - 8, 11);
+        const int h = (std::min)(r.height() - 8, 11);
         const int w = h;
         const int right = r.right() - 4;
         const int left = right - w;
