@@ -8,9 +8,10 @@
 #   irida_backend    -> irida_transport, irida_proto, irida_host, irida_base
 #   irida_target     -> irida_backend, irida_proto, irida_base
 #   irida_disasm     -> irida_base, Zydis::Zydis
+#   irida_analysis   -> irida_base, irida_disasm
 #   irida_binfmt     -> irida_base, LIEF::LIEF
-#   irida_capi       -> irida_base, irida_target, irida_disasm, irida_backend, irida_binfmt, irida_proto,
-#                       irida_host (WIN32 only, via native_backend.hpp)
+#   irida_capi       -> irida_base, irida_target, irida_disasm, irida_analysis, irida_backend,
+#                       irida_binfmt, irida_proto, irida_host (WIN32 only, via native_backend.hpp)
 #   irida_mock       -> irida_capi
 #   irida_gui        -> irida_capi, irida_mock, Qt6::Widgets, Qt6::Svg
 function(irida_assert_deps target)
@@ -38,8 +39,9 @@ function(irida_run_layer_check)
   irida_assert_deps(irida_backend irida_transport irida_proto irida_host irida_base)
   irida_assert_deps(irida_target irida_backend irida_proto irida_base)
   irida_assert_deps(irida_disasm irida_base Zydis::Zydis)
+  irida_assert_deps(irida_analysis irida_base irida_disasm)
   irida_assert_deps(irida_binfmt irida_base LIEF::LIEF)
-  irida_assert_deps(irida_capi irida_base irida_target irida_disasm irida_backend irida_binfmt irida_proto irida_host)
+  irida_assert_deps(irida_capi irida_base irida_target irida_disasm irida_analysis irida_backend irida_binfmt irida_proto irida_host)
   irida_assert_deps(irida_mock irida_capi)
   if(TARGET irida_gui)
     irida_assert_deps(irida_gui irida_capi irida_mock Qt6::Widgets Qt6::Svg)
