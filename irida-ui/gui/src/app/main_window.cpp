@@ -16,6 +16,7 @@
 #include "panels/graph/graph_view.hpp"
 #include "panels/memory/memory_map_panel.hpp"
 #include "panels/memory/memory_panel.hpp"
+#include "panels/overview/overview_bar.hpp"
 #include "panels/symbols/modules_panel.hpp"
 #include "session/debug_controller.hpp"
 #include "theme/icons.hpp"
@@ -123,6 +124,16 @@ void MainWindow::buildToolbar() {
         QAction* act = tb->addAction(icons::load(a.icon), a.text);
         connect(act, &QAction::triggered, controller_, a.slot);
     }
+
+    // The overview bar sits on its own full-width toolbar row below the debug
+    // controls, so it spans the whole window.
+    addToolBarBreak();
+    auto* overviewBar = addToolBar("Overview");
+    overviewBar->setObjectName("OverviewToolbar");
+    overviewBar->setMovable(false);
+    overview_ = new OverviewBar(controller_, this);
+    overview_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    overviewBar->addWidget(overview_);
 }
 
 void MainWindow::buildDocks() {

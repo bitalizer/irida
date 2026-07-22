@@ -6,7 +6,6 @@ class DisassemblyPanel;
 class RegistersPanel;
 class MemoryPanel;
 class StackPanel;
-class OverviewBar;
 
 // Composes the four "hot" debugger panels into the classic CPU-view splitter
 // layout: disassembly + registers on top, memory + stack on the bottom. This
@@ -25,7 +24,6 @@ class CpuWidget : public QWidget {
     }
 
   private:
-    OverviewBar* overview_;
     DisassemblyPanel* disasm_;
     RegistersPanel* registers_;
     MemoryPanel* memory_;

@@ -99,16 +99,16 @@ QColor graphEdgeUncond() {
 }
 
 QColor overviewCode() {
-    return QColor(0x4a, 0x7a, 0xb8); // blue: executable sections
+    return QColor(0x66, 0xbb, 0x5a); // green: executable code
 }
 QColor overviewData() {
-    return QColor(0x5c, 0xa0, 0x5c); // green: writable data
+    return QColor(0xd6, 0x8a, 0x2e); // amber: writable data
 }
 QColor overviewReadonly() {
-    return QColor(0x6a, 0x6a, 0x72); // grey: read-only data
+    return QColor(0x4a, 0x7a, 0xb8); // blue: read-only data
 }
 QColor overviewMarker() {
-    return QColor(0xe0, 0x3c, 0x3c); // red: current-address marker
+    return QColor(0xf2, 0xf2, 0xf2); // bright: current-address marker
 }
 
 } // namespace theme

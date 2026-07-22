@@ -6,6 +6,7 @@
 #include <QMainWindow>
 #include <vector>
 class DebugController;
+class OverviewBar;
 class QDockWidget;
 class QLabel;
 class QProgressBar;
@@ -61,6 +62,7 @@ class MainWindow : public QMainWindow {
     XrefsPanel* xrefs_;
     GraphView* graph_;
 
+    OverviewBar* overview_;
     QLabel* statusLabel_;
     QProgressBar* statusProgress_;
 
