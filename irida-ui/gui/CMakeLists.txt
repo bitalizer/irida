@@ -36,8 +36,9 @@ add_executable(irida_gui WIN32
   src/panels/console/console_panel.cpp
   src/panels/execution/backtrace_panel.cpp
   src/panels/graph/graph_view.cpp
-  src/panels/overview/overview_bar.cpp
   src/panels/overview/byte_overview_panel.cpp
+  src/panels/overview/byte_map_strip.cpp
+  src/panels/overview/byte_map_view.cpp
   resources/icons.qrc)
 target_include_directories(irida_gui PRIVATE src)
 target_link_libraries(irida_gui PRIVATE irida_capi irida_mock Qt6::Widgets Qt6::Svg)

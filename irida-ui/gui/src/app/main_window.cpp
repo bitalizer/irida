@@ -14,7 +14,7 @@
 #include "panels/execution/breakpoints_panel.hpp"
 #include "panels/execution/threads_panel.hpp"
 #include "panels/memory/memory_map_panel.hpp"
-#include "panels/overview/overview_bar.hpp"
+#include "panels/overview/byte_map_view.hpp"
 #include "panels/symbols/modules_panel.hpp"
 #include "session/debug_controller.hpp"
 #include "theme/icons.hpp"
@@ -41,7 +41,7 @@ namespace {
 // state saved by an older build is discarded instead of restored on top of the
 // new layout — otherwise a stale blob can, for example, pull the overview bar
 // back up next to the toolbar buttons.
-constexpr int kLayoutStateVersion = 11;
+constexpr int kLayoutStateVersion = 12;
 } // namespace
 
 MainWindow::MainWindow(IridaSession* session, SessionKind kind, bool autoAnalyze, QWidget* parent)
@@ -49,7 +49,16 @@ MainWindow::MainWindow(IridaSession* session, SessionKind kind, bool autoAnalyze
     setWindowTitle("Irida");
     controller_ = new DebugController(session, this, kind);
     cpu_ = new CpuWidget(controller_, this);
-    setCentralWidget(cpu_);
+
+    // The byte-map sits to the right of the code view at the same level, sharing
+    // its height. A splitter lets the map be widened or collapsed.
+    byteMap_ = new ByteMapView(controller_, this);
+    auto* center = new QSplitter(Qt::Horizontal, this);
+    center->addWidget(cpu_);
+    center->addWidget(byteMap_);
+    center->setStretchFactor(0, 5);
+    center->setStretchFactor(1, 1);
+    setCentralWidget(center);
 
     buildMenuBar();
     buildToolbar();
@@ -140,18 +149,6 @@ void MainWindow::buildToolbar() {
         QAction* act = tb->addAction(icons::load(a.icon), a.text);
         connect(act, &QAction::triggered, controller_, a.slot);
     }
-
-    // The overview bar sits on its own full-width toolbar row below the debug
-    // controls, so it spans the whole window.
-    addToolBarBreak(Qt::TopToolBarArea);
-    auto* overviewBar = new QToolBar("Overview", this);
-    overviewBar->setObjectName("OverviewToolbar");
-    overviewBar->setMovable(false);
-    overviewBar->setFloatable(false);
-    addToolBar(Qt::TopToolBarArea, overviewBar);
-    overview_ = new OverviewBar(controller_, this);
-    overview_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    overviewBar->addWidget(overview_);
 }
 
 void MainWindow::buildDocks() {
