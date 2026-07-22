@@ -8,9 +8,8 @@ class QComboBox;
 class QGroupBox;
 
 // The options shown after choosing a binary, before it opens. An analysis
-// Load Options: an analysis toggle + depth slider drive real behavior; the CPU
-// and per-pass options are presented for parity and enabled as the engine
-// gains the corresponding capability.
+// toggle + depth selector drive real behavior; the CPU and per-pass options are
+// presented and enabled as the engine gains the corresponding capability.
 class LoadOptionsDialog : public QDialog {
     Q_OBJECT
   public:

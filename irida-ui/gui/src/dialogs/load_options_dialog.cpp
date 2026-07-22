@@ -17,9 +17,9 @@
 
 namespace {
 
-// The per-pass toggles shown under the level selector. These describe
-// analysis passes the engine does not expose yet; they are displayed disabled
-// for parity and enabled individually as each pass lands.
+// The per-pass toggles shown under the level selector. These describe analysis
+// passes the engine does not expose yet; they are displayed disabled and
+// enabled individually as each pass lands.
 const char* kAnalysisPasses[] = {
     "Analyze all symbols",
     "Analyze instructions for references",
