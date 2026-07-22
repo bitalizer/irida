@@ -2,30 +2,22 @@
 #pragma once
 #include <QWidget>
 class DebugController;
+class DisassemblyView;
 class DisassemblyPanel;
-class RegistersPanel;
-class MemoryPanel;
-class StackPanel;
 
-// Composes the four "hot" debugger panels into the classic CPU-view splitter
-// layout: disassembly + registers on top, memory + stack on the bottom. This
-// is a layout, not a domain owner — it creates the panels and arranges them;
-// panel logic itself lives in panels/.
+// Hosts the main code view. Historically this was the classic split CPU layout
+// (code + registers over memory + stack); those companion panels are parked for
+// now (see cpu_widget.cpp) and the code view fills the whole area.
 class CpuWidget : public QWidget {
     Q_OBJECT
   public:
     explicit CpuWidget(DebugController* controller, QWidget* parent = nullptr);
 
-    DisassemblyPanel* disassembly() const {
-        return disasm_;
-    }
-    MemoryPanel* memory() const {
-        return memory_;
-    }
+    DisassemblyPanel* disassembly() const;
 
   private:
-    DisassemblyPanel* disasm_;
-    RegistersPanel* registers_;
-    MemoryPanel* memory_;
-    StackPanel* stack_;
+    DisassemblyView* codeView_;
+    // RegistersPanel* registers_;
+    // MemoryPanel* memory_;
+    // StackPanel* stack_;
 };

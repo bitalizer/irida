@@ -17,6 +17,7 @@ add_executable(irida_gui WIN32
   src/session/debug_controller.cpp
   src/widgets/irida_table_view.cpp
   src/layouts/cpu_widget.cpp
+  src/layouts/disassembly_view.cpp
   src/panels/disassembly/disassembly_panel.cpp
   src/panels/registers/registers_panel.cpp
   src/panels/memory/memory_panel.cpp
@@ -36,6 +37,7 @@ add_executable(irida_gui WIN32
   src/panels/execution/backtrace_panel.cpp
   src/panels/graph/graph_view.cpp
   src/panels/overview/overview_bar.cpp
+  src/panels/overview/byte_overview_panel.cpp
   resources/icons.qrc)
 target_include_directories(irida_gui PRIVATE src)
 target_link_libraries(irida_gui PRIVATE irida_capi irida_mock Qt6::Widgets Qt6::Svg)
