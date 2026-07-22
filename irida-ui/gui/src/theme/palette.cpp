@@ -98,14 +98,22 @@ QColor graphEdgeUncond() {
     return QColor(0x7f, 0x88, 0x96); // muted grey-blue for a single edge
 }
 
-QColor overviewCode() {
-    return QColor(0x66, 0xbb, 0x5a); // green: executable code
-}
-QColor overviewData() {
-    return QColor(0xd6, 0x8a, 0x2e); // amber: writable data
-}
-QColor overviewReadonly() {
-    return QColor(0x4a, 0x7a, 0xb8); // blue: read-only data
+QColor overviewSection(int index) {
+    // Each section gets a distinct, stable color cycling through this palette so
+    // adjacent sections are visually separable. Tones are muted to sit calmly
+    // against the dark canvas rather than fight it.
+    static const QColor palette[] = {
+        QColor(0x4c, 0x9a, 0x8e), // teal
+        QColor(0x6f, 0xa8, 0x5c), // green
+        QColor(0x5a, 0x8c, 0xc2), // blue
+        QColor(0x9b, 0x7c, 0xc4), // violet
+        QColor(0xd0, 0xa8, 0x4c), // gold
+        QColor(0xcc, 0x82, 0x50), // amber
+        QColor(0xc4, 0x6a, 0x6a), // clay
+        QColor(0x7f, 0x9c, 0xa8), // slate
+    };
+    constexpr int count = sizeof(palette) / sizeof(palette[0]);
+    return palette[((index % count) + count) % count];
 }
 QColor overviewMarker() {
     return QColor(0xf2, 0xf2, 0xf2); // bright: current-address marker

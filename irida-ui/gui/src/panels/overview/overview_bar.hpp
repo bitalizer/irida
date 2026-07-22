@@ -30,17 +30,17 @@ class OverviewBar : public QWidget {
     struct Band {
         uint64_t vaddr;
         uint64_t vsize;
-        uint8_t perms;
+        uint64_t packedStart; // offset of this band along the packed bar
         QString name;
     };
 
     uint64_t addressAt(int x) const;
     int xForAddress(uint64_t addr) const;
+    const Band* bandForAddress(uint64_t addr) const;
     void navigateToX(int x);
 
     DebugController* controller_;
     std::vector<Band> bands_;
-    uint64_t start_ = 0;
-    uint64_t end_ = 0;
+    uint64_t total_ = 0; // summed size of all bands
     uint64_t current_ = 0;
 };

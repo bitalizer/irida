@@ -127,10 +127,12 @@ void MainWindow::buildToolbar() {
 
     // The overview bar sits on its own full-width toolbar row below the debug
     // controls, so it spans the whole window.
-    addToolBarBreak();
-    auto* overviewBar = addToolBar("Overview");
+    addToolBarBreak(Qt::TopToolBarArea);
+    auto* overviewBar = new QToolBar("Overview", this);
     overviewBar->setObjectName("OverviewToolbar");
     overviewBar->setMovable(false);
+    overviewBar->setFloatable(false);
+    addToolBar(Qt::TopToolBarArea, overviewBar);
     overview_ = new OverviewBar(controller_, this);
     overview_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     overviewBar->addWidget(overview_);
