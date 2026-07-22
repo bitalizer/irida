@@ -27,9 +27,12 @@ void DebugController::destroySession() {
 }
 
 void DebugController::setSession(IridaSession* s, SessionKind kind) {
+    bool kindChanged = kind != session_kind_;
     destroySession();
     session_ = s;
     session_kind_ = kind;
+    if (kindChanged)
+        emit sessionKindChanged();
     emit stateChanged();
 }
 

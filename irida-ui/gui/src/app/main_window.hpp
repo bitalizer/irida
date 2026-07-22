@@ -24,7 +24,6 @@ class SymbolsPanel;
 class StringsPanel;
 class FunctionsPanel;
 class XrefsPanel;
-class GraphView;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -44,6 +43,9 @@ class MainWindow : public QMainWindow {
     void restoreLayout();
     void resetLayout();
     void attachToProcess();
+    // Shows the debug-only right-side docks when a live process is attached and
+    // hides them in static file mode.
+    void applyDebugDockVisibility();
 
     DebugController* controller_;
     CpuWidget* cpu_;
@@ -60,12 +62,12 @@ class MainWindow : public QMainWindow {
     StringsPanel* strings_;
     FunctionsPanel* functions_;
     XrefsPanel* xrefs_;
-    GraphView* graph_;
 
     OverviewBar* overview_;
     QLabel* statusLabel_;
     QProgressBar* statusProgress_;
 
     std::vector<QDockWidget*> docks_;
-    QByteArray defaultState_; // window layout snapshot for Reset Layout
+    std::vector<QDockWidget*> debugDocks_; // right-side docks shown only when live
+    QByteArray defaultState_;              // window layout snapshot for Reset Layout
 };

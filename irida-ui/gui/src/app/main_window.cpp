@@ -13,9 +13,7 @@
 #include "panels/execution/backtrace_panel.hpp"
 #include "panels/execution/breakpoints_panel.hpp"
 #include "panels/execution/threads_panel.hpp"
-#include "panels/graph/graph_view.hpp"
 #include "panels/memory/memory_map_panel.hpp"
-#include "panels/memory/memory_panel.hpp"
 #include "panels/overview/overview_bar.hpp"
 #include "panels/symbols/modules_panel.hpp"
 #include "session/debug_controller.hpp"
@@ -31,16 +29,19 @@
 #include <QProgressBar>
 #include <QScreen>
 #include <QSettings>
+#include <QSplitter>
 #include <QStatusBar>
+#include <QTabWidget>
 #include <QTimer>
 #include <QToolBar>
+#include <QVBoxLayout>
 
 namespace {
 // Bump when the fixed layout (toolbars, dock defaults) changes so a window
 // state saved by an older build is discarded instead of restored on top of the
 // new layout — otherwise a stale blob can, for example, pull the overview bar
 // back up next to the toolbar buttons.
-constexpr int kLayoutStateVersion = 3;
+constexpr int kLayoutStateVersion = 11;
 } // namespace
 
 MainWindow::MainWindow(IridaSession* session, SessionKind kind, bool autoAnalyze, QWidget* parent)
@@ -56,17 +57,18 @@ MainWindow::MainWindow(IridaSession* session, SessionKind kind, bool autoAnalyze
     buildViewMenu();
     buildStatusBar();
 
-    // Snapshot the freshly-built layout so Reset Layout can return to it.
+    // Snapshot the freshly-built layout (with every dock present) so Reset
+    // Layout and the attach transition can return to the full arrangement.
     defaultState_ = saveState(kLayoutStateVersion);
-
-    // navigation: follow address in memory panel + scroll disasm
-    connect(controller_, &DebugController::navigationRequested, this, [this](uint64_t addr) {
-        cpu_->memory()->setBase(addr);
-        cpu_->memory()->refresh();
-    });
 
     resize(1200, 800);
     restoreLayout();
+
+    // Debug docks track the session kind: hidden for a static file, shown once a
+    // live process is attached.
+    applyDebugDockVisibility();
+    connect(controller_, &DebugController::sessionKindChanged, this,
+            &MainWindow::applyDebugDockVisibility);
 
     // Populate the panels after construction returns and the window is shown,
     // so the first data load runs on the event loop rather than blocking the
@@ -76,6 +78,12 @@ MainWindow::MainWindow(IridaSession* session, SessionKind kind, bool autoAnalyze
         if (autoAnalyze)
             controller_->runAnalysis();
     });
+}
+
+void MainWindow::applyDebugDockVisibility() {
+    bool live = controller_->isLive();
+    for (QDockWidget* dock : debugDocks_)
+        dock->setVisible(live);
 }
 
 void MainWindow::buildMenuBar() {
@@ -153,7 +161,6 @@ void MainWindow::buildDocks() {
     memoryMap_ = new MemoryMapPanel(controller_, this);
     backtrace_ = new BacktracePanel(controller_, this);
     console_ = new ConsolePanel(controller_, this);
-    graph_ = new GraphView(controller_, this);
     sections_ = new SectionsPanel(controller_, this);
     imports_ = new ImportsPanel(controller_, this);
     exports_ = new ExportsPanel(controller_, this);
@@ -173,45 +180,59 @@ void MainWindow::buildDocks() {
         return dock;
     };
 
+    // The right-side group is debug-only: it means nothing without a live
+    // process, so it is tracked separately and shown only when one is attached.
     auto* modDock = addDock("Modules", "ModulesDock", modules_, Qt::RightDockWidgetArea);
     auto* bpDock = addDock("Breakpoints", "BreakpointsDock", breakpoints_, Qt::RightDockWidgetArea);
     auto* threadsDock = addDock("Threads", "ThreadsDock", threads_, Qt::RightDockWidgetArea);
     auto* mapDock = addDock("Memory Map", "MemoryMapDock", memoryMap_, Qt::RightDockWidgetArea);
     auto* btDock = addDock("Backtrace", "BacktraceDock", backtrace_, Qt::RightDockWidgetArea);
-    auto* xrefsDock = addDock("Xrefs", "XrefsDock", xrefs_, Qt::RightDockWidgetArea);
-    addDock("Console", "ConsoleDock", console_, Qt::BottomDockWidgetArea);
-    auto* graphDock = addDock("Graph", "GraphDock", graph_, Qt::RightDockWidgetArea);
+    debugDocks_ = {modDock, bpDock, threadsDock, mapDock, btDock};
 
     tabifyDockWidget(modDock, bpDock);
     tabifyDockWidget(bpDock, threadsDock);
     tabifyDockWidget(threadsDock, mapDock);
     tabifyDockWidget(mapDock, btDock);
-    tabifyDockWidget(btDock, xrefsDock);
-    tabifyDockWidget(xrefsDock, graphDock);
     modDock->raise();
 
-    struct BinfmtDock {
-        const char* title;
-        const char* objectName;
-        QWidget* widget;
-    };
-    // Functions leads: it's the primary way into a binary, so it's the first
-    // tab and the one shown by default.
-    const BinfmtDock binfmtDocks[] = {
-        {"Functions", "FunctionsDock", functions_}, {"Sections", "SectionsDock", sections_},
-        {"Imports", "ImportsDock", imports_},       {"Exports", "ExportsDock", exports_},
-        {"Symbols", "SymbolsDock", symbols_},       {"Strings", "StringsDock", strings_},
-    };
-    QDockWidget* firstBinfmt = nullptr;
-    for (const auto& d : binfmtDocks) {
-        auto* dock = addDock(d.title, d.objectName, d.widget, Qt::LeftDockWidgetArea);
-        if (firstBinfmt)
-            tabifyDockWidget(firstBinfmt, dock);
-        else
-            firstBinfmt = dock;
-    }
-    if (firstBinfmt)
-        firstBinfmt->raise();
+    // Console spans the full width along the very bottom, in its own area.
+    addDock("Console", "ConsoleDock", console_, Qt::BottomDockWidgetArea);
+
+    // The left column is a single dock holding a fixed two-row split: the binary
+    // tabs on top and Cross References beneath. Keeping them in one dock (joined
+    // by a splitter) guarantees Xrefs stays its own row and never collapses into
+    // the tab bar, which is what happens when they are separate docks in the
+    // same area.
+    auto* binfmtTabs = new QTabWidget(this);
+    binfmtTabs->setDocumentMode(true);
+    // Functions leads: it's the primary way into a binary, so it's the first tab.
+    binfmtTabs->addTab(functions_, "Functions");
+    binfmtTabs->addTab(sections_, "Sections");
+    binfmtTabs->addTab(imports_, "Imports");
+    binfmtTabs->addTab(exports_, "Exports");
+    binfmtTabs->addTab(symbols_, "Symbols");
+    binfmtTabs->addTab(strings_, "Strings");
+
+    auto* xrefsHeader = new QLabel("Cross References", this);
+    xrefsHeader->setContentsMargins(6, 4, 6, 4);
+    auto* xrefsPane = new QWidget(this);
+    auto* xrefsLayout = new QVBoxLayout(xrefsPane);
+    xrefsLayout->setContentsMargins(0, 0, 0, 0);
+    xrefsLayout->setSpacing(0);
+    xrefsLayout->addWidget(xrefsHeader);
+    xrefsLayout->addWidget(xrefs_);
+
+    auto* leftSplit = new QSplitter(Qt::Vertical, this);
+    leftSplit->addWidget(binfmtTabs);
+    leftSplit->addWidget(xrefsPane);
+    leftSplit->setStretchFactor(0, 3);
+    leftSplit->setStretchFactor(1, 2);
+
+    auto* leftDock = new QDockWidget("Explorer", this);
+    leftDock->setObjectName("ExplorerDock");
+    leftDock->setWidget(leftSplit);
+    addDockWidget(Qt::LeftDockWidgetArea, leftDock);
+    docks_.push_back(leftDock);
 }
 
 void MainWindow::buildViewMenu() {
@@ -229,6 +250,9 @@ void MainWindow::resetLayout() {
     for (QDockWidget* dock : docks_)
         dock->setVisible(true);
     restoreState(defaultState_, kLayoutStateVersion);
+    // The snapshot was taken with every dock present; re-apply the mode rule so
+    // Reset Layout does not resurrect the debug-only docks in static mode.
+    applyDebugDockVisibility();
 }
 
 void MainWindow::buildStatusBar() {

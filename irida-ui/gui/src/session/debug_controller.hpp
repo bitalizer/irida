@@ -63,6 +63,10 @@ class DebugController : public QObject {
     void navigationRequested(uint64_t addr);
     void analysisStarted();
     void analysisFinished();
+    // Emitted when the session is swapped for one of a different kind (e.g. a
+    // static file session replaced by a live process on attach), so the UI can
+    // show or hide debug-only surfaces.
+    void sessionKindChanged();
 
   private:
     void afterOp(uint64_t epoch_before);
