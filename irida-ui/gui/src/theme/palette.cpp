@@ -100,17 +100,19 @@ QColor graphEdgeUncond() {
 
 QColor overviewSection(int index) {
     // Each section gets a distinct, stable color cycling through this palette so
-    // adjacent sections are visually separable. Tones are muted to sit calmly
-    // against the dark canvas rather than fight it.
+    // adjacent bands are clearly separable. A broad spread of hues (not just
+    // muted neighbors) keeps consecutive sections from blurring together.
     static const QColor palette[] = {
-        QColor(0x4c, 0x9a, 0x8e), // teal
-        QColor(0x6f, 0xa8, 0x5c), // green
-        QColor(0x5a, 0x8c, 0xc2), // blue
-        QColor(0x9b, 0x7c, 0xc4), // violet
-        QColor(0xd0, 0xa8, 0x4c), // gold
-        QColor(0xcc, 0x82, 0x50), // amber
-        QColor(0xc4, 0x6a, 0x6a), // clay
-        QColor(0x7f, 0x9c, 0xa8), // slate
+        QColor(0x35, 0xb8, 0xa6), // teal
+        QColor(0x4f, 0xc4, 0x6e), // green
+        QColor(0x4a, 0x92, 0xdd), // blue
+        QColor(0xa9, 0x6f, 0xd4), // violet
+        QColor(0xe8, 0xb3, 0x3a), // gold
+        QColor(0xe8, 0x7d, 0x3c), // orange
+        QColor(0xdc, 0x5a, 0x52), // red
+        QColor(0x6f, 0x9c, 0xb0), // steel
+        QColor(0xc9, 0x6a, 0x9e), // magenta
+        QColor(0x8f, 0xb0, 0x4a), // olive
     };
     constexpr int count = sizeof(palette) / sizeof(palette[0]);
     return palette[((index % count) + count) % count];

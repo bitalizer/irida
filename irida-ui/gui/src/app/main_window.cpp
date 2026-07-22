@@ -35,6 +35,14 @@
 #include <QTimer>
 #include <QToolBar>
 
+namespace {
+// Bump when the fixed layout (toolbars, dock defaults) changes so a window
+// state saved by an older build is discarded instead of restored on top of the
+// new layout — otherwise a stale blob can, for example, pull the overview bar
+// back up next to the toolbar buttons.
+constexpr int kLayoutStateVersion = 3;
+} // namespace
+
 MainWindow::MainWindow(IridaSession* session, SessionKind kind, bool autoAnalyze, QWidget* parent)
     : QMainWindow(parent) {
     setWindowTitle("Irida");
@@ -49,7 +57,7 @@ MainWindow::MainWindow(IridaSession* session, SessionKind kind, bool autoAnalyze
     buildStatusBar();
 
     // Snapshot the freshly-built layout so Reset Layout can return to it.
-    defaultState_ = saveState();
+    defaultState_ = saveState(kLayoutStateVersion);
 
     // navigation: follow address in memory panel + scroll disasm
     connect(controller_, &DebugController::navigationRequested, this, [this](uint64_t addr) {
@@ -187,10 +195,12 @@ void MainWindow::buildDocks() {
         const char* objectName;
         QWidget* widget;
     };
+    // Functions leads: it's the primary way into a binary, so it's the first
+    // tab and the one shown by default.
     const BinfmtDock binfmtDocks[] = {
-        {"Sections", "SectionsDock", sections_}, {"Imports", "ImportsDock", imports_},
-        {"Exports", "ExportsDock", exports_},    {"Symbols", "SymbolsDock", symbols_},
-        {"Strings", "StringsDock", strings_},    {"Functions", "FunctionsDock", functions_},
+        {"Functions", "FunctionsDock", functions_}, {"Sections", "SectionsDock", sections_},
+        {"Imports", "ImportsDock", imports_},       {"Exports", "ExportsDock", exports_},
+        {"Symbols", "SymbolsDock", symbols_},       {"Strings", "StringsDock", strings_},
     };
     QDockWidget* firstBinfmt = nullptr;
     for (const auto& d : binfmtDocks) {
@@ -218,7 +228,7 @@ void MainWindow::buildViewMenu() {
 void MainWindow::resetLayout() {
     for (QDockWidget* dock : docks_)
         dock->setVisible(true);
-    restoreState(defaultState_);
+    restoreState(defaultState_, kLayoutStateVersion);
 }
 
 void MainWindow::buildStatusBar() {
@@ -267,12 +277,15 @@ void MainWindow::restoreLayout() {
             move(primary->availableGeometry().center() - rect().center());
     }
 
-    restoreState(s.value("windowState").toByteArray());
+    // Versioned restore: a state blob written by an older build (different
+    // toolbar/dock layout) fails the version check and is ignored, so the
+    // freshly-built layout stands instead of being overwritten by a stale one.
+    restoreState(s.value("windowState").toByteArray(), kLayoutStateVersion);
 }
 
 void MainWindow::closeEvent(QCloseEvent* event) {
     QSettings s("Irida", "Irida");
     s.setValue("geometry", saveGeometry());
-    s.setValue("windowState", saveState());
+    s.setValue("windowState", saveState(kLayoutStateVersion));
     QMainWindow::closeEvent(event);
 }

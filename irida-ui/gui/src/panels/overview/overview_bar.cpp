@@ -6,9 +6,17 @@
 #include <QPainter>
 #include <QToolTip>
 #include <algorithm>
+#include <cmath>
 
 namespace {
 constexpr int kBarHeight = 22;
+
+// Compress a section's byte size into a visual weight. The square root pulls
+// huge and tiny sections closer together so every section keeps a clickable
+// slice of the bar, while still keeping larger sections visibly larger.
+double displayWeight(uint64_t vsize) {
+    return std::sqrt(static_cast<double>(vsize));
+}
 } // namespace
 
 OverviewBar::OverviewBar(DebugController* controller, QWidget* parent)
@@ -29,16 +37,19 @@ void OverviewBar::refresh() {
     const IridaSection* secs = nullptr;
     size_t n = irida_sections(s, &secs);
 
-    // Sections are packed back-to-back by size (ignoring the gaps between their
-    // virtual addresses), so the whole bar is filled and every pixel maps to a
-    // real section. total_ is the summed size that a pixel position divides.
+    // Lay the sections out left to right by compressed weight (not raw byte
+    // size), so the whole bar is filled and even the smallest section keeps a
+    // visible band. Each band also carries a stable color index.
     bands_.clear();
-    total_ = 0;
+    displayTotal_ = 0;
+    int color = 0;
     for (size_t i = 0; i < n; ++i) {
         if (secs[i].vsize == 0)
             continue;
-        bands_.push_back({secs[i].vaddr, secs[i].vsize, total_, QString::fromUtf8(secs[i].name)});
-        total_ += secs[i].vsize;
+        double span = displayWeight(secs[i].vsize);
+        bands_.push_back({secs[i].vaddr, secs[i].vsize, displayTotal_, span, color++,
+                          QString::fromUtf8(secs[i].name)});
+        displayTotal_ += span;
     }
     update();
 }
@@ -56,25 +67,31 @@ const OverviewBar::Band* OverviewBar::bandForAddress(uint64_t addr) const {
 }
 
 int OverviewBar::xForAddress(uint64_t addr) const {
-    if (total_ == 0)
+    if (displayTotal_ == 0)
         return -1;
     const Band* b = bandForAddress(addr);
     if (!b)
         return -1;
-    uint64_t packed = b->packedStart + (addr - b->vaddr);
-    return static_cast<int>((static_cast<double>(packed) / static_cast<double>(total_)) * width());
+    // Position within the band scales by how far the address sits into the real
+    // section, but the band's own width comes from its compressed span.
+    double intoBand =
+        b->vsize ? static_cast<double>(addr - b->vaddr) / static_cast<double>(b->vsize) : 0.0;
+    double pos = b->displayStart + intoBand * b->displaySpan;
+    return static_cast<int>((pos / displayTotal_) * width());
 }
 
 uint64_t OverviewBar::addressAt(int x) const {
-    if (total_ == 0 || width() == 0)
+    if (displayTotal_ == 0 || width() == 0)
         return 0;
     double frac = std::clamp(static_cast<double>(x) / static_cast<double>(width()), 0.0, 1.0);
-    uint64_t packed = static_cast<uint64_t>(frac * static_cast<double>(total_));
-    // Find the band whose packed range contains this position, then convert
-    // back to the section's virtual address.
+    double pos = frac * displayTotal_;
+    // Find the band covering this visual position, then map back through the
+    // band's real byte range so the returned address is exact.
     for (const Band& b : bands_) {
-        if (packed >= b.packedStart && packed < b.packedStart + b.vsize)
-            return b.vaddr + (packed - b.packedStart);
+        if (pos >= b.displayStart && pos < b.displayStart + b.displaySpan) {
+            double intoBand = b.displaySpan ? (pos - b.displayStart) / b.displaySpan : 0.0;
+            return b.vaddr + static_cast<uint64_t>(intoBand * static_cast<double>(b.vsize));
+        }
     }
     return bands_.empty() ? 0 : bands_.back().vaddr;
 }
@@ -82,16 +99,14 @@ uint64_t OverviewBar::addressAt(int x) const {
 void OverviewBar::paintEvent(QPaintEvent*) {
     QPainter p(this);
     p.fillRect(rect(), theme::background());
-    if (bands_.empty() || total_ == 0)
+    if (bands_.empty() || displayTotal_ == 0)
         return;
 
-    for (size_t i = 0; i < bands_.size(); ++i) {
-        const Band& b = bands_[i];
-        int x0 = static_cast<int>((static_cast<double>(b.packedStart) / total_) * width());
-        int x1 =
-            static_cast<int>((static_cast<double>(b.packedStart + b.vsize) / total_) * width());
+    for (const Band& b : bands_) {
+        int x0 = static_cast<int>((b.displayStart / displayTotal_) * width());
+        int x1 = static_cast<int>(((b.displayStart + b.displaySpan) / displayTotal_) * width());
         int w = std::max(1, x1 - x0);
-        p.fillRect(QRect(x0, 2, w, height() - 4), theme::overviewSection(static_cast<int>(i)));
+        p.fillRect(QRect(x0, 2, w, height() - 4), theme::overviewSection(b.colorIndex));
     }
 
     int mx = xForAddress(current_);

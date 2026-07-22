@@ -6,10 +6,10 @@
 #include <vector>
 class DebugController;
 
-// A horizontal byte-map of the whole program: each section is a colored band
-// sized in proportion to its address range, colored by permissions. A marker
-// tracks the current address; clicking or dragging navigates to the address
-// under the cursor.
+// A horizontal byte-map of the whole program: each section is a colored band,
+// widths compressed so tiny sections stay visible next to large ones, each a
+// distinct cycling color. A marker tracks the current address; clicking or
+// dragging navigates to the address under the cursor.
 class OverviewBar : public QWidget {
     Q_OBJECT
   public:
@@ -30,7 +30,12 @@ class OverviewBar : public QWidget {
     struct Band {
         uint64_t vaddr;
         uint64_t vsize;
-        uint64_t packedStart; // offset of this band along the packed bar
+        // Visual span along the bar. Widths are compressed (not linear in byte
+        // size) so a tiny section stays visible and clickable next to a huge
+        // one; address math still uses vaddr/vsize, so navigation is exact.
+        double displayStart;
+        double displaySpan;
+        int colorIndex;
         QString name;
     };
 
@@ -41,6 +46,6 @@ class OverviewBar : public QWidget {
 
     DebugController* controller_;
     std::vector<Band> bands_;
-    uint64_t total_ = 0; // summed size of all bands
+    double displayTotal_ = 0; // summed visual span of all bands
     uint64_t current_ = 0;
 };
